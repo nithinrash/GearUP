@@ -1,0 +1,45 @@
+{
+  "qas": [
+    {"key": "India", "question": "India", "answer": "🇮🇳"},
+    {"key": "China", "question": "China", "answer": "🇨🇳"},
+    {"key": "USA", "question": "USA", "answer": "🇺🇸"},
+    {"key": "Japan", "question": "Japan", "answer": "🇯🇵"},
+    {"key": "France", "question": "France", "answer": "🇫🇷"},
+    {"key": "Germany", "question": "Germany", "answer": "🇩🇪"},
+    {"key": "Italy", "question": "Italy", "answer": "🇮🇹"},
+    {"key": "Brazil", "question": "Brazil", "answer": "🇧🇷"},
+    {"key": "Niger", "question": "Niger", "answer": "🇳🇪"},
+    {"key": "UK", "question": "UK", "answer": "🇬🇧"},
+    {"key": "Australia", "question": "Australia", "answer": "🇦🇺"},
+    {"key": "Russia", "question": "Russia", "answer": "🇷🇺"},
+    {"key": "Spain", "question": "Spain", "answer": "🇪🇸"},
+    {"key": "Mexico", "question": "Mexico", "answer": "🇲🇽"},
+    {"key": "South Korea", "question": "South Korea", "answer": "🇰🇷"},
+    {"key": "South Africa", "question": "South Africa", "answer": "🇿🇦"}
+  ],
+
+  "innerOrder": [
+    "India","China","USA","Japan",
+    "France","Germany","Italy","Brazil",
+    "Niger","UK","Australia","Russia",
+    "Spain","Mexico","South Korea","South Africa"
+  ],
+
+  "printOrder": [
+    "India","China","USA","Japan",
+    "France","Germany","Italy","Brazil",
+    "Niger","UK","Australia","Russia",
+    "Spain","Mexico","South Korea","South Africa"
+  ],
+
+  "outerFlags": [
+    "🇻🇳","🇱🇷","🇷🇺",
+    "🇫🇷","🇲🇽","🇰🇷",
+    "🇯🇲","🇳🇪","🇨🇳",
+    "🇦🇺","🇵🇱","🇷🇴",
+    "🇩🇪","🇺🇬","🇿🇦",
+    "🇮🇳","🇬🇧","🇺🇸",
+    "🇯🇵","🇪🇸","🇧🇪",
+    "🇮🇹","🇧🇷","🇮🇪"
+  ]
+}
