@@ -3,7 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1565C0">
     <title>Quiz Wheel Gear Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -90,19 +95,106 @@
             transform: translateY(0%) !important;
         }
 
-        /* Landscape Enforcement */
-        #rotate-message {
-            display: none;
+        /* Mobile-First Phone App Optimizations */
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        @media only screen and (orientation: portrait) and (max-width: 1024px) {
-            #game-container {
-                display: none !important;
+        /* Phone-specific flag pills */
+        @media (max-width: 480px) {
+            .flag-pill {
+                padding: 2px 4px;
+                border-width: 2px;
+                border-radius: 6px;
             }
 
-            #rotate-message {
-                display: flex !important;
+            .flag-pill img {
+                width: 20px !important;
             }
+        }
+
+        @media (max-width: 768px) {
+            .flag-pill {
+                padding: 3px 5px;
+            }
+
+            .flag-pill img {
+                width: 24px !important;
+            }
+
+            #q-panel {
+                max-width: 45vw;
+                padding: 6px 10px;
+                top: 8px !important;
+                left: 8px !important;
+                border-radius: 12px;
+            }
+
+            #q-text {
+                font-size: 10px;
+                line-height: 1.3;
+            }
+
+            #hint-box {
+                top: 10px !important;
+                font-size: 9px;
+            }
+
+            #hint-box>div {
+                padding: 4px 8px;
+            }
+
+            #score-panel {
+                top: 8px !important;
+                right: 8px !important;
+            }
+
+            #score-panel>div {
+                padding: 6px 12px !important;
+                border-width: 2px !important;
+            }
+
+            #score-display {
+                font-size: 18px !important;
+            }
+
+            #overlay-emoji {
+                font-size: 60px !important;
+            }
+
+            #overlay-msg {
+                font-size: 32px !important;
+            }
+
+            #overlay-details {
+                max-width: 90vw;
+                padding: 12px;
+            }
+        }
+
+        /* Very small phones */
+        @media (max-width: 360px) {
+            #q-panel {
+                max-width: 40vw;
+                padding: 4px 6px;
+            }
+
+            #q-text {
+                font-size: 9px;
+            }
+
+            .flag-pill img {
+                width: 16px !important;
+            }
+        }
+
+        /* Always allow portrait mode on phones */
+        #rotate-message {
+            display: none;
         }
     </style>
 </head>
@@ -125,8 +217,9 @@
 
         <canvas id="gameCanvas" class="absolute inset-0 z-10"></canvas>
 
-        <div id="ui-layer" class="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-            <div id="flags-container" class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-500">
+        <div id="ui-layer" class="absolute inset-0 z-20 pointer-events-none">
+            <div id="flags-container" class="absolute inset-0 w-full h-full transition-opacity duration-500"
+                style="opacity: 0;">
             </div>
 
             <div id="selection-box" class="absolute z-50"></div>
@@ -155,6 +248,48 @@
                     <div>
                         <div class="text-[#1B5E20] text-sm font-bold uppercase">Answer</div>
                         <div id="overlay-a" class="text-[#2E7D32] text-2xl font-black mt-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TUTORIAL OVERLAY -->
+    <div id="tutorial-overlay" class="fixed inset-0 z-[100] pointer-events-auto">
+        <!-- Phase 1: Initial rotation tutorial -->
+        <div id="tutorial-phase1" class="absolute inset-0 flex items-center justify-center">
+            <!-- Curved arrow left -->
+            <div id="arrow-left" class="absolute animate-pulse" style="opacity: 0;">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                    <path d="M60 50 Q40 20 20 50" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" />
+                    <polygon points="15,45 20,55 28,48" fill="white" />
+                </svg>
+            </div>
+            <!-- Curved arrow right -->
+            <div id="arrow-right" class="absolute animate-pulse" style="opacity: 0;">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                    <path d="M20 50 Q40 20 60 50" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" />
+                    <polygon points="65,45 60,55 52,48" fill="white" />
+                </svg>
+            </div>
+            <!-- Tap instruction -->
+            <div id="tap-hint" class="absolute text-center" style="opacity: 0;">
+                <div class="bg-black/60 backdrop-blur-sm rounded-2xl px-6 py-4 text-white animate-bounce">
+                    <div class="text-3xl mb-2">👆</div>
+                    <div class="text-lg font-bold">TAP TO SELECT</div>
+                    <div class="text-sm opacity-80">Rotate wheel with swipe</div>
+                </div>
+            </div>
+        </div>
+        <!-- Phase 2: Outer wheel tutorial -->
+        <div id="tutorial-phase2" class="absolute inset-0 hidden">
+            <div id="match-hint" class="absolute text-center" style="opacity: 0;">
+                <div class="bg-black/60 backdrop-blur-sm rounded-2xl px-6 py-4 text-white">
+                    <div class="text-2xl mb-2">🎯</div>
+                    <div class="text-lg font-bold">MATCH Q & A</div>
+                    <div class="text-sm opacity-80 mt-2">
+                        <span class="inline-block px-2 py-1 bg-white/20 rounded">1 Tap = Confirm</span>
+                        <span class="inline-block px-2 py-1 bg-white/20 rounded ml-2">2 Taps = Home</span>
                     </div>
                 </div>
             </div>
@@ -216,8 +351,16 @@
             zoom: 1.5,        // Start zoomed in
             targetZoom: 1.5,
             ringOpacity: 0,   // Start hidden
-            targetRingOpacity: 0
+            targetRingOpacity: 0,
+
+            // Tutorial state
+            tutorialShown: false,
+            tutorialPhase: 1
         };
+
+        // Double-tap detection
+        let lastTapTime = 0;
+        const DOUBLE_TAP_DELAY = 300; // ms
 
         // Mappings
         let countryToQ = {};
@@ -338,21 +481,42 @@
         }
 
         function drawInternalTooth(ctx, cx, cy, rRoot, rTip, numTeeth) {
-            // For internal gear (ring), teeth point INWARDS
-            // rRoot is Outer radius of gap? No.
-            // Usually defined: Radius of Tips (smaller) and Radius of Roots (larger)
+            // For internal gear (ring), teeth point INWARDS - THICK GEAR TEETH
+            // Matching Kotlin's buildSingleInternalTooth with rounded corners
 
-            // Actually, the Ring Body is drawn as a thick annulus up to rRoot.
-            // We need to cut 'negative' teeth or add 'positive' teeth pointing in?
-            // Implementation: We draw the blue teeth ON TOP of the ring background.
-            // Triangle / Trapezoid shape.
+            const toothH = rRoot - rTip;
+            const pitch = (2 * Math.PI) / numTeeth;
+            const topFrac = 0.42; // tooth top width fraction
+            const top = pitch * topFrac;
+            const flank = (pitch - top) / 2;
 
-            const w = rRoot - rTip;
+            // Tooth dimensions - THICKER teeth
+            const baseWidth = minDim * 0.035;  // Wide base
+            const tipWidth = minDim * 0.018;   // Narrower tip
+
+            // Rounded fillet radii
+            const rootFillet = toothH * 0.15;
+            const tipRound = toothH * 0.12;
+
             ctx.beginPath();
-            ctx.moveTo(rRoot, -minDim * 0.015);
-            ctx.lineTo(rTip, -minDim * 0.005);
-            ctx.lineTo(rTip, minDim * 0.005);
-            ctx.lineTo(rRoot, minDim * 0.015);
+            // Start at bottom-left of tooth base
+            ctx.moveTo(rRoot, -baseWidth);
+
+            // Left flank with curve to tip
+            ctx.quadraticCurveTo(
+                rRoot - toothH * 0.3, -baseWidth * 0.7,
+                rTip + tipRound, -tipWidth
+            );
+
+            // Tip (rounded)
+            ctx.lineTo(rTip + tipRound, tipWidth);
+
+            // Right flank with curve to base
+            ctx.quadraticCurveTo(
+                rRoot - toothH * 0.3, baseWidth * 0.7,
+                rRoot, baseWidth
+            );
+
             ctx.closePath();
         }
 
@@ -467,14 +631,25 @@
             ctx.fill();
 
             // Hub Text "TAP" if zoomed
+            const hubIsMobile = minDim < 500;
             if (!state.roundStarted && state.zoom > 1.2) {
                 ctx.fillStyle = 'rgba(255,255,255,0.8)';
-                ctx.font = `bold ${minDim * 0.04}px Inter`;
+                ctx.font = `bold ${minDim * (hubIsMobile ? 0.035 : 0.04)}px Inter`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText("TAP", 0, 0);
-                ctx.font = `bold ${minDim * 0.02}px Inter`;
-                ctx.fillText("TO CONFIRM", 0, minDim * 0.03);
+                ctx.fillText("TAP", 0, -minDim * 0.01);
+                ctx.font = `bold ${minDim * (hubIsMobile ? 0.016 : 0.02)}px Inter`;
+                ctx.fillText("TO SELECT", 0, minDim * 0.025);
+            } else if (state.roundStarted) {
+                // Show tap instructions when outer wheel is visible
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.font = `bold ${minDim * (hubIsMobile ? 0.018 : 0.022)}px Inter`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("1× CHECK", 0, -minDim * 0.018);
+                ctx.font = `bold ${minDim * (hubIsMobile ? 0.015 : 0.018)}px Inter`;
+                ctx.fillStyle = 'rgba(255,200,200,0.9)';
+                ctx.fillText("2× HOME", 0, minDim * 0.015);
             } else {
                 // Bolts normally
                 ctx.fillStyle = '#263238';
@@ -494,15 +669,47 @@
 
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            const fontSize = Math.max(12, minDim * 0.024);
-            ctx.font = `bold ${fontSize}px Inter`;
-            const textR = geom.gearRootR * 0.82;
+            // Mobile-optimized font size - scales down on smaller screens
+            const isMobile = minDim < 500;
+            const baseFontSize = isMobile ? Math.max(8, minDim * 0.018) : Math.max(12, minDim * 0.022);
+            const textR = geom.gearRootR * (isMobile ? 0.78 : 0.82);
             const gearStepRad = (2 * Math.PI) / GEAR_TEETH;
+
+            // Find the 5 rightmost indices for inner gear (closest to 0 degrees)
+            function getInnerRightmost5() {
+                const indices = [];
+                for (let i = 0; i < GEAR_TEETH; i++) {
+                    const angleDeg = (state.gearAngle + i * (360 / GEAR_TEETH)) % 360;
+                    let normAngle = angleDeg;
+                    if (normAngle > 180) normAngle -= 360;
+                    if (normAngle < -180) normAngle += 360;
+                    indices.push({ idx: i, angle: Math.abs(normAngle) });
+                }
+                // Sort by closest to 0 (right side)
+                indices.sort((a, b) => a.angle - b.angle);
+                return new Map(indices.slice(0, 5).map((x, rank) => [x.idx, rank]));
+            }
+
+            const innerRightmost5 = getInnerRightmost5();
 
             innerItems.forEach((label, i) => {
                 const theta = i * gearStepRad;
                 const x = textR * Math.cos(theta);
                 const y = textR * Math.sin(theta);
+
+                // Check if this item is in the rightmost 5
+                const rank = innerRightmost5.get(i);
+                let sizeMultiplier = 1.0;
+                if (rank !== undefined) {
+                    // Rank 0 = closest to right (biggest), rank 4 = 5th closest (smaller boost)
+                    // Reduced scaling for mobile to fit text properly
+                    const maxScale = isMobile ? 1.25 : 1.4;
+                    const scaleStep = isMobile ? 0.05 : 0.075;
+                    sizeMultiplier = maxScale - (rank * scaleStep);
+                }
+
+                const fontSize = baseFontSize * sizeMultiplier;
+                ctx.font = `bold ${fontSize}px Inter`;
 
                 ctx.save();
                 ctx.translate(x, y);
@@ -514,6 +721,13 @@
                 // Flip logic for readability
                 if (normDeg > 90 && normDeg < 270) {
                     ctx.rotate(Math.PI);
+                }
+
+                // Add slight stroke for visibility on enlarged items
+                if (rank !== undefined && rank < 3) {
+                    ctx.strokeStyle = 'rgba(192, 192, 192, 0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeText(label, 0, 0);
                 }
 
                 ctx.fillStyle = '#003366';
@@ -535,6 +749,12 @@
         function updateDomElements() {
             if (!minDim) return;
 
+            // Update flags container opacity to match ring opacity
+            const flagsContainer = document.getElementById('flags-container');
+            if (flagsContainer) {
+                flagsContainer.style.opacity = state.ringOpacity;
+            }
+
             // Background Stickers (Parallax or static? Static for now)
             // ...
 
@@ -547,9 +767,28 @@
             // ScreenX = centerX + (WorldX - centerX) * zoom
             // ScreenY = centerY + (WorldY - centerY) * zoom
 
-            const radius = geom.ringTipR * 1.35;
+            // Position flags on the outer ring band (middle of the ring)
+            const radius = (geom.ringOuterR + geom.ringRootR) / 2;
             const ringPitch = (2 * Math.PI) / RING_TEETH;
             const phaseOffset = (state.ringAngle + RING_STEP / 2 + 4 + RING_STEP / 2) * (Math.PI / 180);
+
+            // Find the 5 rightmost indices (closest to 0 degrees / right side)
+            function getRightmost5Indices() {
+                const indices = [];
+                for (let i = 0; i < RING_TEETH; i++) {
+                    const theta = i * ringPitch + phaseOffset;
+                    const angleDeg = (theta * 180 / Math.PI) % 360;
+                    // Normalize to -180 to 180
+                    let normAngle = angleDeg;
+                    if (normAngle > 180) normAngle -= 360;
+                    indices.push({ idx: i, angle: Math.abs(normAngle) });
+                }
+                // Sort by closest to 0 (right side)
+                indices.sort((a, b) => a.angle - b.angle);
+                return new Set(indices.slice(0, 5).map(x => x.idx));
+            }
+
+            const rightmost5 = getRightmost5Indices();
 
             flagElements.forEach((el, i) => {
                 if (state.ringOpacity < 0.1) {
@@ -569,9 +808,55 @@
 
                 el.style.left = sx + 'px';
                 el.style.top = sy + 'px';
-                el.style.transform = `translate(-50%, -50%) scale(${state.zoom})`; // Also scale the pill? Or keep clear?
-                // Keeping scale(1) looks cleaner usually, but strictly speaking it should zoom.
-                // Let's keep scale(1) for readability unless it overlaps.
+
+                // Dynamic sizing - rightmost 5 get progressively bigger based on rank
+                const isBig = rightmost5.has(i);
+                const baseScale = state.zoom;
+
+                // Get rank (0 = closest to right, 4 = 5th closest)
+                let rank = -1;
+                if (isBig) {
+                    const indices = [];
+                    for (let j = 0; j < RING_TEETH; j++) {
+                        const t = j * ringPitch + phaseOffset;
+                        const aDeg = (t * 180 / Math.PI) % 360;
+                        let na = aDeg;
+                        if (na > 180) na -= 360;
+                        indices.push({ idx: j, angle: Math.abs(na) });
+                    }
+                    indices.sort((a, b) => a.angle - b.angle);
+                    rank = indices.findIndex(x => x.idx === i);
+                }
+
+                // Scale: rank 0 = 1.5x, rank 1 = 1.4x, rank 2 = 1.3x, rank 3 = 1.2x, rank 4 = 1.1x
+                // Reduced for mobile
+                const flagIsMobile = minDim < 500;
+                let sizeScale = 1.0;
+                if (rank >= 0 && rank < 5) {
+                    const maxFlagScale = flagIsMobile ? 1.25 : 1.5;
+                    const flagScaleStep = flagIsMobile ? 0.05 : 0.1;
+                    sizeScale = maxFlagScale - (rank * flagScaleStep);
+                }
+
+                el.style.transform = `translate(-50%, -50%) scale(${baseScale * sizeScale})`;
+
+                // Visual enhancements for bigger flags
+                if (rank >= 0 && rank < 3) {
+                    el.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.2)';
+                    el.style.borderWidth = flagIsMobile ? '2px' : '4px';
+                } else {
+                    el.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.2)';
+                    el.style.borderWidth = flagIsMobile ? '2px' : '3px';
+                }
+
+                // Also adjust the image/content size for the big ones
+                const img = el.querySelector('img');
+                if (img) {
+                    // Gradient image sizes based on rank - smaller for mobile
+                    const baseSizes = flagIsMobile ? [28, 25, 23, 21, 19, 18] : [52, 46, 42, 38, 35, 32];
+                    const sizeIdx = rank >= 0 && rank < 5 ? rank : 5;
+                    img.style.width = baseSizes[sizeIdx] + 'px';
+                }
             });
         }
 
@@ -646,6 +931,91 @@
             }
         }
 
+        /* ===========================
+           TUTORIAL ANIMATIONS
+           =========================== */
+        function showInitialTutorial() {
+            if (state.tutorialShown) return;
+
+            const overlay = document.getElementById('tutorial-overlay');
+            const phase1 = document.getElementById('tutorial-phase1');
+            const arrowLeft = document.getElementById('arrow-left');
+            const arrowRight = document.getElementById('arrow-right');
+            const tapHint = document.getElementById('tap-hint');
+
+            overlay.style.pointerEvents = 'none';
+            phase1.classList.remove('hidden');
+
+            // Position arrows around the gear
+            const updateArrowPositions = () => {
+                const gx = geom.gearCenter.x;
+                const gy = geom.gearCenter.y;
+                const r = geom.gearTipR * state.zoom * 0.8;
+
+                arrowLeft.style.left = (gx - r - 60) + 'px';
+                arrowLeft.style.top = (gy - 40) + 'px';
+
+                arrowRight.style.left = (gx + r - 20) + 'px';
+                arrowRight.style.top = (gy - 40) + 'px';
+
+                tapHint.style.left = gx + 'px';
+                tapHint.style.top = (gy + r + 30) + 'px';
+                tapHint.style.transform = 'translateX(-50%)';
+            };
+
+            setTimeout(() => {
+                updateArrowPositions();
+                // Fade in arrows
+                arrowLeft.style.transition = 'opacity 0.5s ease-out';
+                arrowRight.style.transition = 'opacity 0.5s ease-out';
+                arrowLeft.style.opacity = '1';
+                arrowRight.style.opacity = '1';
+
+                // Then show tap hint
+                setTimeout(() => {
+                    tapHint.style.transition = 'opacity 0.5s ease-out';
+                    tapHint.style.opacity = '1';
+                }, 800);
+            }, 500);
+        }
+
+        function showPhase2Tutorial() {
+            const phase1 = document.getElementById('tutorial-phase1');
+            const phase2 = document.getElementById('tutorial-phase2');
+            const matchHint = document.getElementById('match-hint');
+
+            phase1.classList.add('hidden');
+            phase2.classList.remove('hidden');
+
+            // Position at center-bottom
+            setTimeout(() => {
+                matchHint.style.left = '50%';
+                matchHint.style.top = '75%';
+                matchHint.style.transform = 'translate(-50%, -50%)';
+                matchHint.style.transition = 'opacity 0.5s ease-out';
+                matchHint.style.opacity = '1';
+
+                // Auto-hide after 3 seconds
+                setTimeout(() => {
+                    matchHint.style.opacity = '0';
+                }, 3000);
+            }, 500);
+        }
+
+        function hideTutorial() {
+            const arrowLeft = document.getElementById('arrow-left');
+            const arrowRight = document.getElementById('arrow-right');
+            const tapHint = document.getElementById('tap-hint');
+            const matchHint = document.getElementById('match-hint');
+
+            [arrowLeft, arrowRight, tapHint, matchHint].forEach(el => {
+                if (el) {
+                    el.style.transition = 'opacity 0.3s ease-out';
+                    el.style.opacity = '0';
+                }
+            });
+        }
+
         function handleClick(x, y) {
             // Check Hub Click first
             const dx = x - geom.gearCenter.x;
@@ -653,19 +1023,46 @@
             const dist = Math.hypot(dx, dy);
 
             if (dist < geom.gearRootR * 0.55) {
-                // Hub Clicked!
+                // Hub Clicked! - Check for double tap
+                const now = Date.now();
+                const isDoubleTap = (now - lastTapTime) < DOUBLE_TAP_DELAY;
+                lastTapTime = now;
+
                 if (!state.roundStarted) {
+                    // Phase 1: Single tap to start round
                     // CONFIRM SELECTION -> Start Zoom Out
                     state.roundStarted = true;
                     state.targetZoom = 1.0;          // Zoom Out
                     state.targetRingOpacity = 1.0;   // Fade In Outer
+                    state.tutorialPhase = 2;         // Switch to phase 2 tutorial
 
                     document.getElementById('hint-box').style.opacity = '0';
                     document.getElementById('score-panel').classList.remove('hidden');
+                    hideTutorial();
+                    showPhase2Tutorial();
                     updateScore();
 
                     // Recalculate match?
                     state.selectedInnerIdx = state.activeInnerIdx;
+                } else {
+                    // Round already started - check tap type
+                    if (isDoubleTap) {
+                        // DOUBLE TAP = RESET (W key - go home)
+                        state.roundStarted = false;
+                        state.targetZoom = 1.5;
+                        state.targetRingOpacity = 0;
+                        state.score = 0;
+                        state.attempts = 0;
+                        state.selectedInnerIdx = null;
+                        state.tutorialPhase = 1;
+                        updateScore();
+                        document.getElementById('hint-box').style.opacity = '1';
+                        document.getElementById('score-panel').classList.add('hidden');
+                        hideTutorial();
+                    } else {
+                        // SINGLE TAP = CHECK ANSWER (S key - confirm)
+                        checkAnswer();
+                    }
                 }
                 return;
             }
@@ -721,7 +1118,101 @@
             // Snap logic... maybe later if user asks.
         }
 
+        function updateScore() {
+            document.getElementById('score-display').innerText = `${state.score}/${state.attempts}`;
+        }
+
+        // Get the flag at the active position (rightmost on outer ring)
+        function getActiveOuterFlag() {
+            const ringPitch = (2 * Math.PI) / RING_TEETH;
+            const phaseOffset = (state.ringAngle + RING_STEP / 2 + 4 + RING_STEP / 2) * (Math.PI / 180);
+
+            // Find which flag is closest to 0 degrees (right side)
+            let closestIdx = 0;
+            let closestAngle = Infinity;
+
+            for (let i = 0; i < RING_TEETH; i++) {
+                const theta = i * ringPitch + phaseOffset;
+                let angleDeg = (theta * 180 / Math.PI) % 360;
+                if (angleDeg > 180) angleDeg -= 360;
+                if (angleDeg < -180) angleDeg += 360;
+
+                if (Math.abs(angleDeg) < closestAngle) {
+                    closestAngle = Math.abs(angleDeg);
+                    closestIdx = i;
+                }
+            }
+
+            return outerItems[closestIdx] || '';
+        }
+
+        // Show overlay slide animation (like Kotlin's OverlaySlide)
+        function showOverlay(isCorrect, question, answer) {
+            const overlay = document.getElementById('overlay-container');
+            const emoji = document.getElementById('overlay-emoji');
+            const msg = document.getElementById('overlay-msg');
+            const details = document.getElementById('overlay-details');
+            const qText = document.getElementById('overlay-q');
+            const aText = document.getElementById('overlay-a');
+
+            // Set content
+            emoji.innerText = isCorrect ? '👏' : '😥';
+            msg.innerText = isCorrect ? 'CORRECT' : 'TRY AGAIN';
+            msg.style.color = isCorrect ? '#4CAF50' : '#FF5252';
+
+            if (question || answer) {
+                details.classList.remove('hidden');
+                qText.innerText = question || '';
+                aText.innerText = answer || '';
+                aText.style.color = isCorrect ? '#2E7D32' : '#B71C1C';
+            } else {
+                details.classList.add('hidden');
+            }
+
+            // Slide in
+            overlay.classList.add('slide-in');
+
+            // Slide out after delay
+            setTimeout(() => {
+                overlay.classList.remove('slide-in');
+            }, 1500);
+        }
+
+        // Check answer and show result
+        function checkAnswer() {
+            if (!state.roundStarted) return;
+
+            const innerLabel = state.activeInnerLabel;
+            const expectedFlag = countryToA[innerLabel];
+            const selectedFlag = getActiveOuterFlag();
+
+            const isCorrect = expectedFlag === selectedFlag;
+
+            state.attempts++;
+            if (isCorrect) state.score++;
+            updateScore();
+
+            const question = countryToQ[innerLabel] || innerLabel;
+            const answer = expectedFlag || selectedFlag;
+
+            showOverlay(isCorrect, question, answer);
+        }
+
         let flagElements = [];
+
+        // Convert flag emoji to country code (e.g., "🇮🇳" -> "in")
+        function flagEmojiToCountryCode(flag) {
+            if (!flag || flag.length < 2) return null;
+            const codePoints = [...flag].map(c => c.codePointAt(0));
+            // Regional indicator symbols are in range 0x1F1E6-0x1F1FF (A-Z)
+            const letters = codePoints
+                .filter(cp => cp >= 0x1F1E6 && cp <= 0x1F1FF)
+                .map(cp => String.fromCharCode(cp - 0x1F1E6 + 65));
+            if (letters.length === 2) {
+                return letters.join('').toLowerCase();
+            }
+            return null;
+        }
 
         function createFlagPills() {
             const container = document.getElementById('flags-container');
@@ -731,7 +1222,16 @@
             outerItems.forEach((flag, i) => {
                 const el = document.createElement('div');
                 el.className = 'flag-pill';
-                el.innerHTML = `<span class="flag-emoji">${flag}</span>`;
+
+                // Try to convert emoji to country code and use flag image
+                const countryCode = flagEmojiToCountryCode(flag);
+                if (countryCode) {
+                    el.innerHTML = `<img src="https://flagcdn.com/w40/${countryCode}.png" alt="${flag}" style="width: 32px; height: auto; border-radius: 3px;">`;
+                } else {
+                    // Fallback to emoji if conversion fails
+                    el.innerHTML = `<span class="flag-emoji">${flag}</span>`;
+                }
+
                 container.appendChild(el);
                 flagElements.push(el);
             });
@@ -805,8 +1305,25 @@
                     state.targetRingAngle += step * 0.666;
                 }
                 if (e.key === 's' || e.key === ' ') {
-                    // Simulate Center Click or verify?
-                    // For now just existing logic or ignore
+                    if (!state.roundStarted) {
+                        // Start round - simulate hub click
+                        handleClick(geom.gearCenter.x, geom.gearCenter.y);
+                    } else {
+                        // Check answer
+                        checkAnswer();
+                    }
+                }
+                if (e.key === 'w') {
+                    // Reset to initial state
+                    state.roundStarted = false;
+                    state.targetZoom = 1.5;
+                    state.targetRingOpacity = 0;
+                    state.score = 0;
+                    state.attempts = 0;
+                    state.selectedInnerIdx = null;
+                    updateScore();
+                    document.getElementById('hint-box').style.opacity = '1';
+                    document.getElementById('score-panel').classList.add('hidden');
                 }
             });
         }
@@ -814,6 +1331,7 @@
         // Init
         async function initGame() {
             initInteraction(); // Enable controls
+            createBackgroundStickers(); // Add emoji decorations like Kotlin
             try {
                 const response = await fetch('flags.json');
                 CONFIG = await response.json();
@@ -834,10 +1352,76 @@
                 // Start
                 resize();
                 requestAnimationFrame(loop);
+
+                // Show tutorial after a brief delay
+                setTimeout(() => {
+                    showInitialTutorial();
+                }, 1000);
             } catch (error) {
                 console.error("Failed to load game configuration:", error);
                 document.getElementById('q-text').innerText = "Error loading game data.";
             }
+        }
+
+        // Background decorations like Kotlin's BackgroundDecorStatic
+        function createBackgroundStickers() {
+            const container = document.getElementById('background-decor');
+            if (!container) return;
+
+            const stickers = [
+                { emoji: '📚', angle: 350, radius: 0.57, size: 70, c1: '#7B61FF', c2: '#4D8AFF', rot: -6 },
+                { emoji: '✏️', angle: 20, radius: 0.55, size: 60, c1: '#FFA24C', c2: '#FFC35B', rot: 8 },
+                { emoji: '🧪', angle: 65, radius: 0.58, size: 65, c1: '#33D1B1', c2: '#1CB5E0', rot: -4 },
+                { emoji: '🪪', angle: 110, radius: 0.56, size: 66, c1: '#58C9F3', c2: '#2D9CDB', rot: 5 },
+                { emoji: '🌎', angle: 155, radius: 0.60, size: 75, c1: '#6EE7F9', c2: '#22D3EE', rot: 0 },
+                { emoji: '⭐', angle: 200, radius: 0.55, size: 56, c1: '#FFC35B', c2: '#FF9E9E', rot: -10 },
+                { emoji: '🎒', angle: 245, radius: 0.58, size: 64, c1: '#FB7A7A', c2: '#FF9E9E', rot: 6 },
+                { emoji: '🧩', angle: 290, radius: 0.56, size: 60, c1: '#6EE7A8', c2: '#34D399', rot: -3 }
+            ];
+
+            stickers.forEach(s => {
+                const el = document.createElement('div');
+                el.style.cssText = `
+                    position: absolute;
+                    width: ${s.size}px;
+                    height: ${s.size}px;
+                    background: linear-gradient(135deg, ${s.c1}, ${s.c2});
+                    border-radius: 16px;
+                    border: 3px solid rgba(255, 255, 255, 0.55);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: ${s.size * 0.45}px;
+                    transform: rotate(${s.rot}deg);
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
+                    pointer-events: none;
+                `;
+                el.innerText = s.emoji;
+                el.dataset.angle = s.angle;
+                el.dataset.radius = s.radius;
+                container.appendChild(el);
+            });
+
+            // Position stickers on resize
+            function positionStickers() {
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                const minD = Math.min(w, h);
+                const cx = w / 2;
+                const cy = h / 2;
+
+                container.querySelectorAll('div').forEach(el => {
+                    const angle = parseFloat(el.dataset.angle) * (Math.PI / 180);
+                    const radius = parseFloat(el.dataset.radius) * minD;
+                    const x = cx + radius * Math.cos(angle);
+                    const y = cy + radius * Math.sin(angle);
+                    el.style.left = (x - el.offsetWidth / 2) + 'px';
+                    el.style.top = (y - el.offsetHeight / 2) + 'px';
+                });
+            }
+
+            positionStickers();
+            window.addEventListener('resize', positionStickers);
         }
 
         initGame();
