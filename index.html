@@ -89,63 +89,100 @@
         .slide-in {
             transform: translateY(0%) !important;
         }
+
+        /* Landscape Enforcement */
+        #rotate-message {
+            display: none;
+        }
+
+        @media only screen and (orientation: portrait) and (max-width: 1024px) {
+            #game-container {
+                display: none !important;
+            }
+
+            #rotate-message {
+                display: flex !important;
+            }
+        }
     </style>
 </head>
 
-<body>
+<body class="bg-gray-100 overflow-hidden select-none m-0 p-0 font-['Inter']">
 
-    <div id="background-decor" class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+    <!-- Landscape Warning Overlay -->
+    <div id="rotate-message"
+        class="fixed inset-0 z-[99999] bg-[#1565C0] flex flex-col items-center justify-center text-white">
+        <div class="text-6xl mb-6 animate-bounce">📱🔄</div>
+        <div class="text-3xl font-black text-center px-8">PLEASE ROTATE DEVICE</div>
+        <p class="mt-4 text-white/80">This game works best in Landscape Mode</p>
     </div>
 
-    <canvas id="gameCanvas" class="absolute inset-0 z-10"></canvas>
+    <!-- Main Game Container -->
+    <div id="game-container" class="relative w-full h-full bg-gradient-to-b from-[#1E88E5] to-[#1565C0]">
 
-    <div id="ui-layer" class="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-        <div id="flags-container" class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-500">
+        <div id="background-decor" class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         </div>
 
-        <div id="selection-box" class="absolute z-50"></div>
+        <canvas id="gameCanvas" class="absolute inset-0 z-10"></canvas>
 
-        <div class="absolute top-4 left-4 max-w-xs p-4 rounded-2xl shadow-lg question-panel pointer-events-auto transition-opacity duration-500"
-            id="q-panel">
-            <div id="q-text" class="text-[#072B4F] text-sm font-semibold leading-tight">Rotate wheel...</div>
-            <div id="a-text" class="text-[#0D47A1] text-base font-bold mt-2 hidden"></div>
-        </div>
-
-        <div id="score-panel" class="absolute top-6 right-6 hidden pointer-events-auto">
-            <div
-                class="bg-gradient-to-r from-[#FF6B6B] to-[#FF5252] border-4 border-[#8B0000] rounded-2xl shadow-xl px-6 py-3 text-center">
-                <div class="text-[#FFF59D] text-xs font-black tracking-widest uppercase">Score</div>
-                <div id="score-display" class="text-white text-3xl font-black">0/0</div>
+        <div id="ui-layer" class="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+            <div id="flags-container" class="absolute inset-0 w-full h-full opacity-0 transition-opacity duration-500">
             </div>
-        </div>
 
-        <div id="hint-box" class="absolute top-20 left-1/2 -translate-x-1/2 pointer-events-auto">
-            <div
-                class="bg-gradient-to-r from-[#1976D2] to-[#64B5F6] border-2 border-white/70 rounded-2xl shadow-lg px-5 py-2">
-                <p class="text-white text-sm font-bold whitespace-nowrap">Rotate wheel (A/D) • Select (S) • Reset (W)
-                </p>
-            </div>
-        </div>
-    </div>
+            <div id="selection-box" class="absolute z-50"></div>
 
-    <div id="overlay-container" class="fixed inset-0 z-50 bg-[#1565C0]/90 flex items-center justify-center">
-        <div class="text-center transform -translate-y-12">
-            <div id="overlay-emoji" class="text-9xl mb-4">👏</div>
-            <div id="overlay-msg" class="text-6xl font-black text-white tracking-widest mb-8">CORRECT</div>
-
-            <div id="overlay-details"
-                class="bg-gradient-to-b from-white/95 to-[#E3F2FD]/90 border-4 border-white/75 rounded-3xl p-6 shadow-2xl max-w-2xl mx-auto text-left hidden">
-                <div class="mb-4">
-                    <div class="text-[#0D47A1] text-sm font-bold uppercase">Question</div>
-                    <div id="overlay-q" class="text-[#072B4F] text-xl font-semibold mt-1"></div>
-                </div>
-                <div>
-                    <div class="text-[#1B5E20] text-sm font-bold uppercase">Answer</div>
-                    <div id="overlay-a" class="text-[#2E7D32] text-2xl font-black mt-1"></div>
+            <div id="hint-box" class="absolute top-20 left-1/2 -translate-x-1/2 pointer-events-auto">
+                <div
+                    class="bg-gradient-to-r from-[#1976D2] to-[#64B5F6] border-2 border-white/70 rounded-2xl shadow-lg px-5 py-2">
+                    <p class="text-white text-sm font-bold whitespace-nowrap">Rotate wheel (A/D) • Select (S) • Reset
+                        (W)
+                    </p>
                 </div>
             </div>
         </div>
+
+        <div id="overlay-container" class="fixed inset-0 z-50 bg-[#1565C0]/90 flex items-center justify-center">
+            <div class="text-center transform -translate-y-12">
+                <div id="overlay-emoji" class="text-9xl mb-4">👏</div>
+                <div id="overlay-msg" class="text-6xl font-black text-white tracking-widest mb-8">CORRECT</div>
+
+                <div id="overlay-details"
+                    class="bg-gradient-to-b from-white/95 to-[#E3F2FD]/90 border-4 border-white/75 rounded-3xl p-6 shadow-2xl max-w-2xl mx-auto text-left hidden">
+                    <div class="mb-4">
+                        <div class="text-[#0D47A1] text-sm font-bold uppercase">Question</div>
+                        <div id="overlay-q" class="text-[#072B4F] text-xl font-semibold mt-1"></div>
+                    </div>
+                    <div>
+                        <div class="text-[#1B5E20] text-sm font-bold uppercase">Answer</div>
+                        <div id="overlay-a" class="text-[#2E7D32] text-2xl font-black mt-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <div class="absolute top-4 left-4 max-w-xs p-4 rounded-2xl shadow-lg question-panel pointer-events-auto transition-opacity duration-500"
+        id="q-panel">
+        <div id="q-text" class="text-[#072B4F] text-sm font-semibold leading-tight">Rotate wheel...</div>
+        <div id="a-text" class="text-[#0D47A1] text-base font-bold mt-2 hidden"></div>
+    </div>
+
+    <div id="score-panel" class="absolute top-6 right-6 hidden pointer-events-auto">
+        <div
+            class="bg-gradient-to-r from-[#FF6B6B] to-[#FF5252] border-4 border-[#8B0000] rounded-2xl shadow-xl px-6 py-3 text-center">
+            <div class="text-[#FFF59D] text-xs font-black tracking-widest uppercase">Score</div>
+            <div id="score-display" class="text-white text-3xl font-black">0/0</div>
+        </div>
+    </div>
+
+    <div id="hint-box" class="absolute top-20 left-1/2 -translate-x-1/2 pointer-events-auto">
+        <div
+            class="bg-gradient-to-r from-[#1976D2] to-[#64B5F6] border-2 border-white/70 rounded-2xl shadow-lg px-5 py-2">
+            <div class="text-white text-sm font-bold shadow-sm">Rotate to pick Question, Click Question or Press 'S'
+            </div>
+        </div>
+    </div>
+    </div> <!-- End Game Container -->
 
     <script>
         /* ===========================
@@ -173,7 +210,13 @@
             attempts: 0,
             selectedInnerIdx: null,
             targetGearAngle: 0,
-            targetRingAngle: 0
+            targetRingAngle: 0,
+
+            // Zoom / Focus State
+            zoom: 1.5,        // Start zoomed in
+            targetZoom: 1.5,
+            ringOpacity: 0,   // Start hidden
+            targetRingOpacity: 0
         };
 
         // Mappings
@@ -189,7 +232,7 @@
         const ctx = canvas.getContext('2d');
         let width, height, minDim;
         let centerX, centerY;
-        let scaleFactor = 1;
+        let scaleFactor = 1; // Not used but good to have
 
         // Geometry Cache
         let geom = {
@@ -222,8 +265,8 @@
             geom.gearTipR = gearPitchR + toothH / 2 + (minDim * 0.0075);
 
             const centerOffset = ringPitchR - gearPitchR;
-            // Contact angle approx 10 degrees converted to radians
-            const contactRad = 10 * (Math.PI / 180);
+            // Contact angle 0 degrees (Right side)
+            const contactRad = 0;
 
             geom.ringCenter = { x: centerX, y: centerY };
             geom.gearCenter = {
@@ -247,13 +290,13 @@
             const dt = (timestamp - lastTime) / 1000;
             lastTime = timestamp;
 
-            // Spring Physics for Rotation
-            const k = 5.0; // stiffness
-            const damp = 0.8; // damping
-
-            // Simple ease-out for now
+            // Spring/Lerp Physics
             state.gearAngle += (state.targetGearAngle - state.gearAngle) * 0.1;
             state.ringAngle += (state.targetRingAngle - state.ringAngle) * 0.1;
+
+            // Zoom & Opacity Animation
+            state.zoom += (state.targetZoom - state.zoom) * 0.05;
+            state.ringOpacity += (state.targetRingOpacity - state.ringOpacity) * 0.05;
 
             render();
             updateUiLogic();
@@ -261,131 +304,214 @@
 
             requestAnimationFrame(loop);
         }
-        // requestAnimationFrame(loop); // Moved to init()
 
-        /* ===========================
-           DRAWING FUNCTIONS
-           =========================== */
+        // ... (Draw functions)
+        function polar(r, theta) {
+            return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
+        }
+
+        function drawExternalGearPath(ctx, cx, cy, rRoot, rTip, numTeeth) {
+            const step = (Math.PI * 2) / numTeeth;
+            const halfStep = step / 2;
+
+            // Simplistic Involute approximation
+            // Tooth thickness at pitch line ~ half pitch
+            const toothWidthAng = halfStep * 0.5;
+
+            ctx.beginPath();
+            for (let i = 0; i < numTeeth; i++) {
+                const theta = i * step;
+                // Root
+                ctx.arc(cx, cy, rRoot, theta - halfStep / 2 + 0.05, theta + halfStep / 2 - 0.05);
+
+                // Tooth Up
+                const p1 = polar(rRoot, theta + halfStep / 2 - 0.05);
+                const p2 = polar(rTip, theta + halfStep / 2 + 0.05);
+                const p3 = polar(rTip, theta + step - halfStep / 2 - 0.05);
+                const p4 = polar(rRoot, theta + step - halfStep / 2 + 0.05);
+
+                ctx.lineTo(p2.x, p2.y);
+                ctx.arc(cx, cy, rTip, theta + halfStep / 2 + 0.05, theta + step - halfStep / 2 - 0.05);
+                ctx.lineTo(p4.x, p4.y);
+            }
+            ctx.closePath();
+        }
+
+        function drawInternalTooth(ctx, cx, cy, rRoot, rTip, numTeeth) {
+            // For internal gear (ring), teeth point INWARDS
+            // rRoot is Outer radius of gap? No.
+            // Usually defined: Radius of Tips (smaller) and Radius of Roots (larger)
+
+            // Actually, the Ring Body is drawn as a thick annulus up to rRoot.
+            // We need to cut 'negative' teeth or add 'positive' teeth pointing in?
+            // Implementation: We draw the blue teeth ON TOP of the ring background.
+            // Triangle / Trapezoid shape.
+
+            const w = rRoot - rTip;
+            ctx.beginPath();
+            ctx.moveTo(rRoot, -minDim * 0.015);
+            ctx.lineTo(rTip, -minDim * 0.005);
+            ctx.lineTo(rTip, minDim * 0.005);
+            ctx.lineTo(rRoot, minDim * 0.015);
+            ctx.closePath();
+        }
 
         function render() {
-            if (!CONFIG) return; // Don't render until config is loaded
+            if (!CONFIG) return;
 
             ctx.clearRect(0, 0, width, height);
 
-            // 1. Draw Outer Ring Background
-            // NOTE: Outer items/flags are HTML elements, so we just draw the metal ring here
-
-            // Scale if round started (Reveal Animation mockup)
-            const reveal = state.roundStarted ? 1 : 0; // Simple switch for now
-
             ctx.save();
             ctx.translate(centerX, centerY);
+            ctx.scale(state.zoom, state.zoom);
+            ctx.translate(-centerX, -centerY);
 
-            // Ring Body
-            ctx.beginPath();
-            ctx.arc(0, 0, geom.ringOuterR, 0, Math.PI * 2);
-            ctx.arc(0, 0, geom.ringRootR, 0, Math.PI * 2, true);
-            const grad = ctx.createLinearGradient(-geom.ringOuterR, -geom.ringOuterR, geom.ringOuterR, geom.ringOuterR);
-            grad.addColorStop(0, '#2E65B8');
-            grad.addColorStop(0.5, '#8AC7FF');
-            grad.addColorStop(1, '#1E56A8');
-            ctx.fillStyle = grad;
-            ctx.fill();
-
-            // Internal Teeth (Ring)
-            const ringStepRad = (2 * Math.PI) / RING_TEETH;
-            const rotOffset = (state.ringAngle + RING_STEP / 2) * (Math.PI / 180); // Phase offset
-
-            ctx.fillStyle = '#1565C0';
-            for (let i = 0; i < RING_TEETH; i++) {
-                const theta = i * ringStepRad + rotOffset;
-                // Simple tooth block
-                const tw = (Math.PI * 2 * geom.ringRootR) / RING_TEETH * 0.5;
+            // 1. Draw Outer Ring (Fade in)
+            if (state.ringOpacity > 0.01) {
+                ctx.globalAlpha = state.ringOpacity;
 
                 ctx.save();
-                ctx.rotate(theta);
+                ctx.translate(centerX, centerY);
+
+                // Ring Body
                 ctx.beginPath();
-                ctx.roundRect(geom.ringRootR - 5, -tw / 2, -(geom.ringRootR - geom.ringTipR), tw, 5);
+                ctx.arc(0, 0, geom.ringOuterR, 0, Math.PI * 2);
+                ctx.arc(0, 0, geom.ringRootR, 0, Math.PI * 2, true);
+                const grad = ctx.createLinearGradient(-geom.ringOuterR, -geom.ringOuterR, geom.ringOuterR, geom.ringOuterR);
+                grad.addColorStop(0, '#2E65B8');
+                grad.addColorStop(0.5, '#8AC7FF');
+                grad.addColorStop(1, '#1E56A8');
+                ctx.fillStyle = grad;
                 ctx.fill();
+
+                // Internal Teeth (Ring)
+                // Use rotOffset for mesh
+                const ringStepRad = (2 * Math.PI) / RING_TEETH;
+                // Correct mesh: Ring angle + offset. 
+                // We want 0-deg contact to be mesh point?
+                // The previous logic had 10-deg contact.
+                // Let's stick to standard math: active contact is at 0 (Right).
+
+                const rotOffset = (state.ringAngle + RING_STEP / 2) * (Math.PI / 180);
+
+                ctx.fillStyle = '#1565C0';
+                for (let i = 0; i < RING_TEETH; i++) {
+                    const theta = i * ringStepRad + rotOffset;
+                    ctx.save();
+                    ctx.rotate(theta);
+                    drawInternalTooth(ctx, 0, 0, geom.ringRootR, geom.ringTipR, RING_TEETH);
+                    ctx.fillStyle = '#1565C0';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                    ctx.lineWidth = minDim * 0.002;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Bolts
+                ctx.fillStyle = '#B0C9DC';
+                for (let i = 0; i < 12; i++) {
+                    const a = (i * 30) * (Math.PI / 180);
+                    const r = (geom.ringOuterR + geom.ringRootR) / 2;
+                    ctx.beginPath();
+                    ctx.arc(r * Math.cos(a), r * Math.sin(a), minDim * 0.005, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 ctx.restore();
+                ctx.globalAlpha = 1.0;
             }
-
-            // Bolts on Ring
-            ctx.fillStyle = '#B0C9DC';
-            for (let i = 0; i < 12; i++) {
-                const a = (i * 30) * (Math.PI / 180);
-                const r = (geom.ringOuterR + geom.ringRootR) / 2;
-                ctx.beginPath();
-                ctx.arc(r * Math.cos(a), r * Math.sin(a), minDim * 0.005, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            ctx.restore();
 
             // 2. Draw Inner Gear
+            // Gear Center: Previously offset for 10deg contact. Now we want Right Side (0deg)
+            // But if we want the gear centered on screen when zoomed... 
+            // The logic: geom.gearCenter is fixed.
+            // If we want zoom focus on the gear, we scale around the center.
+
             ctx.save();
             ctx.translate(geom.gearCenter.x, geom.gearCenter.y);
             ctx.rotate(state.gearAngle * (Math.PI / 180));
 
-            // Gear Body (Orange)
-            ctx.beginPath();
-            ctx.arc(0, 0, geom.gearRootR, 0, Math.PI * 2);
+            // Shadow
+            ctx.save();
+            ctx.translate(minDim * 0.005, minDim * 0.005);
+            drawExternalGearPath(ctx, 0, 0, geom.gearRootR, geom.gearTipR, GEAR_TEETH);
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fill();
+            ctx.restore();
+
+            // Gear Body
+            drawExternalGearPath(ctx, 0, 0, geom.gearRootR, geom.gearTipR, GEAR_TEETH);
             const gearGrad = ctx.createRadialGradient(0, 0, geom.gearRootR * 0.5, 0, 0, geom.gearTipR);
             gearGrad.addColorStop(0, '#FFE082');
             gearGrad.addColorStop(1, '#FF8F00');
             ctx.fillStyle = gearGrad;
             ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+            ctx.lineWidth = minDim * 0.003;
+            ctx.stroke();
 
-            // External Teeth
-            const gearStepRad = (2 * Math.PI) / GEAR_TEETH;
-            for (let i = 0; i < GEAR_TEETH; i++) {
-                const theta = i * gearStepRad;
-                const tw = (Math.PI * 2 * geom.gearTipR) / GEAR_TEETH * 0.45;
-                ctx.save();
-                ctx.rotate(theta);
-                ctx.beginPath();
-                ctx.roundRect(geom.gearRootR - 2, -tw / 2, (geom.gearTipR - geom.gearRootR), tw, 4);
-                ctx.fillStyle = '#FF8F00';
-                ctx.fill();
-                ctx.restore();
-            }
-
-            // Inner Hub (Grey)
+            // Inner Hub (Grey) - CLICKABLE
+            const boreR = geom.gearRootR * 0.55;
             ctx.beginPath();
-            ctx.arc(0, 0, geom.gearRootR * 0.55, 0, Math.PI * 2);
-            const hubGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, geom.gearRootR * 0.55);
-            hubGrad.addColorStop(0, '#95A5AE');
-            hubGrad.addColorStop(1, '#3A454B');
+            ctx.arc(0, 0, boreR, 0, Math.PI * 2);
+            const hubGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, boreR);
+            // Highlight hub when ready to click?
+            if (!state.roundStarted && state.zoom > 1.2) {
+                hubGrad.addColorStop(0, '#B0BEC5'); // Lighter
+                hubGrad.addColorStop(1, '#546E7A');
+            } else {
+                hubGrad.addColorStop(0, '#95A5AE');
+                hubGrad.addColorStop(1, '#3A454B');
+            }
             ctx.fillStyle = hubGrad;
             ctx.fill();
 
-            // 3. Draw Inner Text (Canvas Text)
-            // We draw text on the canvas because it rotates with the gear perfectly
+            // Hub Text "TAP" if zoomed
+            if (!state.roundStarted && state.zoom > 1.2) {
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.font = `bold ${minDim * 0.04}px Inter`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("TAP", 0, 0);
+                ctx.font = `bold ${minDim * 0.02}px Inter`;
+                ctx.fillText("TO CONFIRM", 0, minDim * 0.03);
+            } else {
+                // Bolts normally
+                ctx.fillStyle = '#263238';
+                for (let k = 0; k < 6; k++) {
+                    const a = (k * 60) * (Math.PI / 180);
+                    const bx = boreR * 0.7 * Math.cos(a);
+                    const by = boreR * 0.7 * Math.sin(a);
+                    ctx.beginPath();
+                    ctx.arc(bx, by, minDim * 0.006, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // 3. Draw Inner Text
+            // ... (Text drawing logic same, just change angle offset if needed?)
+            // We want text readable at 0 degrees (Right)
+
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.font = 'bold 14px Inter';
-
+            const fontSize = Math.max(12, minDim * 0.024);
+            ctx.font = `bold ${fontSize}px Inter`;
             const textR = geom.gearRootR * 0.82;
+            const gearStepRad = (2 * Math.PI) / GEAR_TEETH;
 
             innerItems.forEach((label, i) => {
-                // If round started, only draw selected? No, draw all for now logic
-                if (state.roundStarted && state.selectedInnerIdx !== null && state.selectedInnerIdx !== i) return;
-
                 const theta = i * gearStepRad;
                 const x = textR * Math.cos(theta);
                 const y = textR * Math.sin(theta);
 
                 ctx.save();
                 ctx.translate(x, y);
-
-                // Calculate global rotation to keep text somewhat upright or radial
-                // Native rotation: theta + gearAngle
-                // We want text readable radially out
                 ctx.rotate(theta);
 
-                // Flip text on left side
                 const globalDeg = (state.gearAngle + (i * 360 / GEAR_TEETH)) % 360;
                 let normDeg = globalDeg < 0 ? globalDeg + 360 : globalDeg;
+
+                // Flip logic for readability
                 if (normDeg > 90 && normDeg < 270) {
                     ctx.rotate(Math.PI);
                 }
@@ -395,465 +521,161 @@
                 ctx.restore();
             });
 
-            ctx.restore();
+            ctx.restore(); // End Gear
+
+            ctx.restore(); // End Zoom Scale
         }
 
-        /* ===========================
-           DOM ELEMENT MANAGERS
-           =========================== */
-
-        // Populate Background
-        const bgContainer = document.getElementById('background-decor');
-        const stickers = [
-            { emoji: "📚", deg: 350, r: 0.57, sz: 138, c: ['#7B61FF', '#4D8AFF'] },
-            { emoji: "🌎", deg: 155, r: 0.60, sz: 148, c: ['#6EE7F9', '#22D3EE'] },
-            { emoji: "✏", deg: 20, r: 0.55, sz: 120, c: ['#FFA24C', '#FFFFC35B'] },
-            { emoji: "🎒", deg: 245, r: 0.58, sz: 128, c: ['#FB7A7A', '#FF9E9E'] },
-        ];
-
-        stickers.forEach(s => {
-            const el = document.createElement('div');
-            el.className = 'sticker-3d absolute flex items-center justify-center rounded-3xl border-4 border-white/50';
-            el.style.width = s.sz + 'px';
-            el.style.height = s.sz + 'px';
-            el.style.background = `linear-gradient(135deg, ${s.c[0]}, ${s.c[1]})`;
-            el.innerHTML = `<span style="font-size:${s.sz * 0.4}px; opacity:0.8">${s.emoji}</span>`;
-
-            // Position calc in updateDom
-            el.dataset.deg = s.deg;
-            el.dataset.r = s.r;
-            bgContainer.appendChild(el);
-        });
-
-        // Flags Container
-        const flagsContainer = document.getElementById('flags-container');
-
-        // Create Pill Elements for Outer Ring
-        // We create them once and just move them
-        let flagElements = [];
-        // Helper: Convert Flag Emoji to ISO Code
-        function getIsoCodeFromEmoji(emoji) {
-            if (!emoji || !/\p{Emoji}/u.test(emoji)) return null;
-            // Emojis are surrogate pairs of Regional Indicator Symbols (0x1F1E6 = A)
-            // 'A' is 127462 in decimal (0x1F1E6). 'a' is 97.
-            // But usually we just take the code point and map it back.
-            // Regional Indicator Symbol A is U+1F1E6
-            const base = 127397; // 0x1F1E6 - 65 ('A') ? No.
-            // 0x1F1E6 (regional A) - 65 ('A') = 127397
-
-            const points = [...emoji].map(c => c.codePointAt(0));
-            if (points.length < 2) return null;
-
-            const code = String.fromCharCode(points[0] - base) + String.fromCharCode(points[1] - base);
-            return code.toLowerCase();
-        }
-
-        // Helper: Create Content (Text or Image)
-        function createContentFromLabel(label, classPrefix = 'flag') {
-            const container = document.createElement('div');
-
-            // Check if it's a flag emoji (length 2-4 unicode chars usually, but regex helps)
-            // Simpler check: is it a short string made of mostly emojis?
-            // And specifically, does it look like a flag? (Regional Indicators)
-            const isFlag = /[\uD83C][\uDDE6-\uDDFF][\uD83C][\uDDE6-\uDDFF]/.test(label);
-
-            if (isFlag) {
-                const code = getIsoCodeFromEmoji(label);
-                if (code && code.match(/^[a-z]{2}$/)) {
-                    const img = document.createElement('img');
-                    img.src = `https://flagcdn.com/w80/${code}.png`;
-                    img.alt = label;
-                    img.className = 'w-8 h-auto object-contain drop-shadow-sm';
-                    if (classPrefix === 'overlay') img.className = 'w-16 h-auto object-contain';
-                    container.appendChild(img);
-                    return container;
-                }
-            }
-
-            // Fallback: Text or Emoji Text (if not a flag or conversion failed)
-            const isEmoji = /\p{Emoji}/u.test(label) && label.length < 5;
-            const content = document.createElement('div');
-            content.className = isEmoji ? `${classPrefix}-emoji` : `${classPrefix}-text`;
-            content.innerText = label;
-            container.appendChild(content);
-            return container;
-        }
-
-        function createFlagPills() {
-            outerItems.forEach((label, i) => {
-                const el = document.createElement('div');
-                el.className = 'flag-pill';
-
-                // Use new helper
-                const content = createContentFromLabel(label);
-
-                // If it returned a container div, unwrap or append
-                // Our helper returns a div wrapping the content.
-                // We want the content directly in the pill usually, but appending the div is fine.
-                // However, flag-pill expects flex centering.
-
-                // Let's just append the children of the result or the result itself.
-                // The helper returns a DIV.
-                while (content.firstChild) {
-                    el.appendChild(content.firstChild);
-                }
-
-                flagsContainer.appendChild(el);
-                flagElements.push(el);
-            });
-        }
+        // ... updateDomElements (Uses state.zoom to scale positions?)
+        // Actually, CSS transform for HTML elements (Pills) needs to handle zoom?
+        // Or we just zoom the canvas and keep HTML elements on top?
+        // If we zoom canvas, the coordinate system changes.
+        // We probably need to apply zoom to DOM element positions too.
 
         function updateDomElements() {
             if (!minDim) return;
 
-            // Update Stickers
-            Array.from(bgContainer.children).forEach(el => {
-                const deg = parseFloat(el.dataset.deg);
-                const rFrac = parseFloat(el.dataset.r);
-                const rad = deg * (Math.PI / 180);
-                const r = minDim * rFrac;
-                const x = centerX + r * Math.cos(rad) - el.offsetWidth / 2;
-                const y = centerY + r * Math.sin(rad) - el.offsetHeight / 2;
-                el.style.transform = `translate(${x}px, ${y}px) rotate(${deg / 10}deg)`;
-            });
+            // Background Stickers (Parallax or static? Static for now)
+            // ...
 
-            // Update Flag Pills
-            const radius = geom.ringTipR * 1.35; // Position outside ring
+            // Flag Pills - need to match zoomed coordinate system?
+            // If canvas is scaled via ctx.scale, visual is zoomed.
+            // HTML elements are independent.
+            // We must project the zoomed coordinates to screen coordinates.
+
+            // Scale center: centerX, centerY
+            // ScreenX = centerX + (WorldX - centerX) * zoom
+            // ScreenY = centerY + (WorldY - centerY) * zoom
+
+            const radius = geom.ringTipR * 1.35;
             const ringPitch = (2 * Math.PI) / RING_TEETH;
-            // Add UI phase offset (approx 4 deg) + Gap phase (half pitch) + Extra half pitch to match Kotlin visual center
             const phaseOffset = (state.ringAngle + RING_STEP / 2 + 4 + RING_STEP / 2) * (Math.PI / 180);
 
             flagElements.forEach((el, i) => {
-                // Visibility Logic
-                if (!state.roundStarted) {
+                if (state.ringOpacity < 0.1) {
                     el.style.opacity = '0';
                     return;
                 }
-
-                el.style.opacity = '1';
+                el.style.opacity = state.ringOpacity;
 
                 const theta = i * ringPitch + phaseOffset;
-                const x = geom.ringCenter.x + radius * Math.cos(theta);
-                const y = geom.ringCenter.y + radius * Math.sin(theta);
+                // World Coords
+                const wx = geom.ringCenter.x + radius * Math.cos(theta);
+                const wy = geom.ringCenter.y + radius * Math.sin(theta);
 
-                // Center the div
-                el.style.left = x + 'px';
-                el.style.top = y + 'px';
-                el.style.transform = 'translate(-50%, -50%)';
+                // Screen Coords
+                const sx = centerX + (wx - centerX) * state.zoom;
+                const sy = centerY + (wy - centerY) * state.zoom;
+
+                el.style.left = sx + 'px';
+                el.style.top = sy + 'px';
+                el.style.transform = `translate(-50%, -50%) scale(${state.zoom})`; // Also scale the pill? Or keep clear?
+                // Keeping scale(1) looks cleaner usually, but strictly speaking it should zoom.
+                // Let's keep scale(1) for readability unless it overlaps.
             });
         }
 
         /* ===========================
-           LOGIC & INTERACTION
+           LOGIC updates
            =========================== */
-
         function updateUiLogic() {
-            // Determine Active Inner Item
-            // The item closest to the "Contact Zone" (approx 10 deg)
-            const contactDeg = 10;
+            // Active Item at 0 degrees (Right)
+            const contactDeg = 0;
             const gearPitch = 360 / GEAR_TEETH;
 
-            // Normalize current angle
             let normGear = state.gearAngle % 360;
             if (normGear < 0) normGear += 360;
 
-            // Which index is at 10 degrees?
-            // i * pitch + angle = 10
-            // i * pitch = 10 - angle
+            // at 0 deg: angle + i*pitch = 0  => i*pitch = -angle
+            // Invert logic:
+            // The item at 0 degrees is the one where (i * step + currentAngle) % 360 ~= 0
+            // i * step = -currentAngle
+            // i = -currentAngle / step
+
             const rawIdx = (contactDeg - state.gearAngle) / gearPitch;
             let idx = Math.round(rawIdx) % GEAR_TEETH;
             if (idx < 0) idx += GEAR_TEETH;
 
             const activeItem = innerItems[idx];
 
-            // Update Question Panel
             if (!state.roundStarted) {
+                // Updating UI
                 document.getElementById('q-text').innerText = countryToQ[activeItem] || activeItem;
-                document.getElementById('a-text').classList.add('hidden');
                 state.activeInnerLabel = activeItem;
                 state.activeInnerIdx = idx;
 
-                // Selection Box Logic (Center on Gear Contact)
-                // Calculate position of tooth
-                const angleRad = contactDeg * (Math.PI / 180);
-                const r = geom.gearRootR;
-                const tx = geom.gearCenter.x + r * Math.cos(angleRad);
-                const ty = geom.gearCenter.y + r * Math.sin(angleRad);
+                // Selection Box Logic
+                // It should be at geom.gearCenter.x + geom.gearRootR, geom.gearCenter.y
+                // Scaled by Zoom!
 
                 const box = document.getElementById('selection-box');
-
-                // Only show if aligned
                 const dist = Math.abs(rawIdx - Math.round(rawIdx));
+
                 if (dist < 0.1) {
+                    // Coordinates in World Space
+                    const wx = geom.gearCenter.x + geom.gearRootR; // Right edge
+                    const wy = geom.gearCenter.y;
+
+                    // To Screen Space
+                    const sx = centerX + (wx - centerX) * state.zoom;
+                    const sy = centerY + (wy - centerY) * state.zoom;
+
                     box.style.display = 'block';
-                    box.style.width = '160px';
-                    box.style.height = '60px';
-                    box.style.left = (tx - 80) + 'px'; // Center
-                    box.style.top = (ty - 30) + 'px';
+                    // Box size also depends on zoom? or fixed UI?
+                    // Let's keep it consistent.
+                    box.style.width = (160 * state.zoom) + 'px';
+                    box.style.height = (60 * state.zoom) + 'px';
+                    box.style.left = (sx - (80 * state.zoom)) + 'px'; // Centered on Right Edge? 
+                    // Wait, right edge is x+R. Box center should be there?
+                    // Or box should contain the text? Text is inside.
+                    // Text R = 0.82 * R.
+                    // Box should be around 0.85 * R?
+
+                    const textR = geom.gearRootR * 0.88;
+                    const tx = geom.gearCenter.x + textR;
+                    const screenTx = centerX + (tx - centerX) * state.zoom;
+
+                    box.style.left = (screenTx - (80 * state.zoom)) + 'px';
+                    box.style.top = (sy - (30 * state.zoom)) + 'px';
+
                 } else {
                     box.style.display = 'none';
                 }
             } else {
-                // Round Started Logic
-                // Selection box should span Question and Answer
-                // For simplicity in this port, we'll hide it or lock it
                 document.getElementById('selection-box').style.display = 'none';
-                document.getElementById('flags-container').classList.remove('opacity-0');
-            }
-        }
-
-        // KEYBOARD CONTROLS
-        window.addEventListener('keydown', (e) => {
-            const key = e.key.toLowerCase();
-
-            if (key === 'a') {
-                state.targetGearAngle -= GEAR_STEP;
-                state.targetRingAngle -= RING_STEP;
-                resetFeedback();
-            } else if (key === 'd') {
-                state.targetGearAngle += GEAR_STEP;
-                state.targetRingAngle += RING_STEP;
-                resetFeedback();
-            } else if (key === 's') {
-                if (!state.roundStarted) {
-                    // Start Round
-                    state.roundStarted = true;
-                    state.selectedInnerIdx = state.activeInnerIdx;
-                    document.getElementById('hint-box').style.opacity = '0';
-                    document.getElementById('score-panel').classList.remove('hidden');
-                    updateScore();
-                } else {
-                    // Submit Answer
-                    // Find active outer flag
-                    // Simplification: In this HTML version, click to select flag
-                    // But to match Kotlin 'S' key logic:
-                    // Check alignment of outer ring vs inner gear
-                    checkAnswer();
-                }
-            } else if (key === 'w') {
-                // Reset
-                state.roundStarted = false;
-                state.selectedInnerIdx = null;
-                state.targetGearAngle = 0;
-                state.targetRingAngle = 0;
-                document.getElementById('flags-container').classList.add('opacity-0');
-                document.getElementById('hint-box').style.opacity = '1';
-                document.getElementById('score-panel').classList.add('hidden');
-                resetFeedback();
-            }
-        });
-
-        function checkAnswer() {
-            // Real geometry matching logic is heavy. 
-            // Mocking logic: Find flag geographically closest to selection box zone
-            const contactRad = 10 * (Math.PI / 180);
-            const radius = geom.ringTipR * 1.35;
-            const targetX = geom.ringCenter.x + radius * Math.cos(contactRad);
-            const targetY = geom.ringCenter.y + radius * Math.sin(contactRad);
-
-            // Find closest pill
-            let bestDist = 9999;
-            let bestIdx = -1;
-
-            flagElements.forEach((el, i) => {
-                const rect = el.getBoundingClientRect();
-                const cx = rect.left + rect.width / 2;
-                const cy = rect.top + rect.height / 2;
-                const dist = Math.hypot(cx - targetX, cy - targetY);
-                if (dist < bestDist) {
-                    bestDist = dist;
-                    bestIdx = i;
-                }
-            });
-
-            if (bestIdx !== -1) {
-                const chosenFlag = outerItems[bestIdx];
-                const activeCountry = state.activeInnerLabel;
-                const correctAnswer = countryToA[activeCountry];
-
-                const isCorrect = chosenFlag === correctAnswer;
-
-                state.attempts++;
-                if (isCorrect) state.score++;
-                updateScore();
-
-                showOverlay(isCorrect, activeCountry, chosenFlag);
-            }
-        }
-
-        function updateScore() {
-            document.getElementById('score-display').innerText = `${state.score}/${state.attempts}`;
-        }
-
-        function showOverlay(isCorrect, q, a) {
-            const container = document.getElementById('overlay-container');
-            const msg = document.getElementById('overlay-msg');
-            const em = document.getElementById('overlay-emoji');
-            const det = document.getElementById('overlay-details');
-            const overlayA = document.getElementById('overlay-a');
-
-            container.classList.remove('hidden'); // Show container
-
-            // Use setTimeout to allow display:block to render before adding transform class
-            setTimeout(() => {
-                // We are using CSS transitions on transform, but logic here is simple toggle
-            }, 10);
-
-            msg.innerText = isCorrect ? "CORRECT" : "TRY AGAIN";
-            msg.className = isCorrect ? "text-6xl font-black text-[#4CAF50] tracking-widest mb-8" : "text-6xl font-black text-[#F44336] tracking-widest mb-8";
-            em.innerText = isCorrect ? "👏" : "😥";
-
-            document.getElementById('overlay-q').innerText = countryToQ[q];
-
-            // Render Answer using Helper (Image or Text)
-            overlayA.innerHTML = '';
-            const ansContent = createContentFromLabel(a, 'overlay');
-            while (ansContent.firstChild) {
-                overlayA.appendChild(ansContent.firstChild);
-            }
-
-            det.classList.remove('hidden');
-
-            setTimeout(() => {
-                container.classList.add('hidden');
-                det.classList.add('hidden');
-            }, 2000);
-        }
-
-        function resetFeedback() {
-            document.getElementById('overlay-container').classList.add('hidden');
-        }
-
-        /* ===========================
-           INTERACTION (TOUCH & MOUSE)
-           =========================== */
-
-        let isDragging = false;
-        let dragStartAngle = 0;
-        let initialGearAngle = 0;
-        let initialRingAngle = 0;
-        let dragStartTime = 0;
-        let dragStartPos = { x: 0, y: 0 };
-
-        function getPointerPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
-        function getAngle(x, y) {
-            return Math.atan2(y - geom.gearCenter.y, x - geom.gearCenter.x) * (180 / Math.PI);
-        }
-
-        function initInteraction() {
-            // Mouse Events
-            canvas.addEventListener('mousedown', handleStart);
-            window.addEventListener('mousemove', handleMove);
-            window.addEventListener('mouseup', handleEnd);
-
-            // Touch Events
-            canvas.addEventListener('touchstart', handleStart, { passive: false });
-            window.addEventListener('touchmove', handleMove, { passive: false });
-            window.addEventListener('touchend', handleEnd);
-        }
-
-        function handleStart(e) {
-            // Prevent default only if inside canvas interactions
-            if (e.target === canvas) e.preventDefault();
-
-            const pos = getPointerPos(e);
-            const dx = pos.x - geom.gearCenter.x;
-            const dy = pos.y - geom.gearCenter.y;
-            const dist = Math.hypot(dx, dy);
-
-            // Hit test: only drag if inside gear area (approx)
-            if (dist < geom.gearTipR * 1.2) {
-                isDragging = true;
-                dragStartAngle = getAngle(pos.x, pos.y);
-                initialGearAngle = state.gearAngle;
-                initialRingAngle = state.ringAngle;
-                dragStartTime = Date.now();
-                dragStartPos = pos;
-
-                // Stop any ongoing inertial animation
-                state.targetGearAngle = state.gearAngle;
-                state.targetRingAngle = state.ringAngle;
-            }
-        }
-
-        function handleMove(e) {
-            if (!isDragging) return;
-            if (e.touches) e.preventDefault(); // Prevent scrolling while dragging
-
-            const pos = getPointerPos(e);
-            const currentAngle = getAngle(pos.x, pos.y);
-            let delta = currentAngle - dragStartAngle;
-
-            // Handle angle wrap-around (e.g. crossing -180/180)
-            if (delta > 180) delta -= 360;
-            if (delta < -180) delta += 360;
-
-            // Update Target Angles (Direct control)
-            state.targetGearAngle = initialGearAngle + delta;
-            state.targetRingAngle = initialRingAngle + delta * (2 / 3); // 2:3 Gear Ratio!
-
-            // To make it feel responsive, snap state immediately or keep slight lag?
-            // Existing loop uses ease-out. Let's update state directly for 1:1 feel during drag?
-            // state.gearAngle = state.targetGearAngle;
-            // state.ringAngle = state.targetRingAngle;
-            // But we want the smooth 'loop' physics to handle the rendering.
-            // Just updating 'target' is fine if physics is fast enough.
-        }
-
-        function handleEnd(e) {
-            if (!isDragging) return;
-            isDragging = false;
-
-            // Click Detection
-            const timeDiff = Date.now() - dragStartTime;
-            const pos = getPointerPos(e.changedTouches ? { touches: [e.changedTouches[0]] } : e); // Handle click vs drag
-            // For 'mouseup', changedTouches is not standard property on MouseEvent, need fallback?
-            // Actually getPointerPos handles standard MouseEvent too if we pass it correctly.
-            // But 'mouseup' event object doesn't have 'touches'.
-            // For Touchend: e.changedTouches[0]
-
-            // Simplified distance check using initial dragStartPos
-            // Mouseup doesn't always have clientX if it's off screen, but usually does.
-            // Let's use the last known move pos? Or just time.
-
-            const dx = (e.clientX || (e.changedTouches ? e.changedTouches[0].clientX : 0)) - (canvas.getBoundingClientRect().left || 0) - dragStartPos.x; // Very rough
-            // Better: just assume if time is short and we barely moved angle
-
-            const angleDiff = Math.abs(state.gearAngle - initialGearAngle);
-
-            if (timeDiff < 250 && angleDiff < 3) {
-                // Treated as Click
-                handleClick(dragStartPos.x, dragStartPos.y);
-            } else {
-                // Snap to nearest tooth?
-                snapToGrid();
             }
         }
 
         function handleClick(x, y) {
-            if (state.roundStarted) return; // Lock interactions during round?
-
-            // Determine which item was clicked
+            // Check Hub Click first
             const dx = x - geom.gearCenter.x;
             const dy = y - geom.gearCenter.y;
-            const clickAngle = Math.atan2(dy, dx) * (180 / Math.PI); // -180 to 180
+            const dist = Math.hypot(dx, dy);
 
-            // Convert clickAngle to 'local gear angle'
-            // Global Item Angle = i * step + gearAngle
-            // We want to find 'i' such that ItemAngle is close to ClickAngle.
-            // But wait, the item rotates. 
-            // Position of item i is at Angle(i) = i*step + gearAngle.
-            // We clicked at ClickAngle.
-            // So we want i where i*step + gearAngle approx ClickAngle
+            if (dist < geom.gearRootR * 0.55) {
+                // Hub Clicked!
+                if (!state.roundStarted) {
+                    // CONFIRM SELECTION -> Start Zoom Out
+                    state.roundStarted = true;
+                    state.targetZoom = 1.0;          // Zoom Out
+                    state.targetRingOpacity = 1.0;   // Fade In Outer
+
+                    document.getElementById('hint-box').style.opacity = '0';
+                    document.getElementById('score-panel').classList.remove('hidden');
+                    updateScore();
+
+                    // Recalculate match?
+                    state.selectedInnerIdx = state.activeInnerIdx;
+                }
+                return;
+            }
+
+            if (state.roundStarted) return;
+
+            // Text Click Logic (Drag-to-rotate)
+            // ... (Existing click logic, updated for 0 deg?)
+
+            const clickAngle = Math.atan2(dy, dx) * (180 / Math.PI);
 
             // Normalize everything
             let normalizedGearAngle = state.gearAngle % 360;
@@ -862,34 +684,25 @@
             let normalizedClick = clickAngle;
             if (normalizedClick < 0) normalizedClick += 360;
 
-            // i * step = Click - Gear
             const step = 360 / GEAR_TEETH;
             let targetI = (normalizedClick - normalizedGearAngle) / step;
-
-            // Round to nearest integer index
             let i = Math.round(targetI);
-
-            // Normalize index
             i = ((i % GEAR_TEETH) + GEAR_TEETH) % GEAR_TEETH;
 
-            // Valid index?
             if (i >= 0 && i < GEAR_TEETH) {
                 rotateToIndex(i);
             }
         }
 
         function rotateToIndex(idx) {
-            // Target: We want item 'idx' to be at CONTACT_DEG (10)
-            // i * step + TargetGearAngle = 10
-            // TargetGearAngle = 10 - i * step
+            // Target: We want item 'idx' to be at 0 DEGREES (Right)
+            // i * step + TargetGearAngle = 0
+            // TargetGearAngle = -i * step
 
             const step = 360 / GEAR_TEETH;
-            let targetG = 10 - idx * step;
+            let targetG = -idx * step; // Simple!
 
-            // Find shortest path from current angle
             let current = state.gearAngle;
-
-            // We want (Target - Current) to be minimal (e.g. -20 vs +340)
             let diff = targetG - current;
             diff = diff % 360;
             if (diff > 180) diff -= 360;
@@ -906,6 +719,96 @@
             const current = state.gearAngle;
             const remainder = current % step;
             // Snap logic... maybe later if user asks.
+        }
+
+        let flagElements = [];
+
+        function createFlagPills() {
+            const container = document.getElementById('flags-container');
+            container.innerHTML = '';
+            flagElements = [];
+
+            outerItems.forEach((flag, i) => {
+                const el = document.createElement('div');
+                el.className = 'flag-pill';
+                el.innerHTML = `<span class="flag-emoji">${flag}</span>`;
+                container.appendChild(el);
+                flagElements.push(el);
+            });
+        }
+
+        function initInteraction() {
+            let isDragging = false;
+            let lastX = 0, lastY = 0;
+
+            const handleStart = (x, y) => {
+                const dx = x - geom.gearCenter.x;
+                const dy = y - geom.gearCenter.y;
+                if (Math.hypot(dx, dy) < geom.gearTipR * 1.2) {
+                    isDragging = true;
+                    lastX = x;
+                    lastY = y;
+                    handleClick(x, y);
+                }
+            };
+
+            const handleMove = (x, y) => {
+                if (!isDragging) return;
+                const dx = x - geom.gearCenter.x;
+                const dy = y - geom.gearCenter.y;
+                const angle = Math.atan2(dy, dx);
+
+                const prevA = Math.atan2(lastY - geom.gearCenter.y, lastX - geom.gearCenter.x);
+                let delta = angle - prevA;
+
+                if (delta > Math.PI) delta -= Math.PI * 2;
+                if (delta < -Math.PI) delta += Math.PI * 2;
+
+                // Apply rotation
+                state.targetGearAngle += delta * (180 / Math.PI);
+                state.targetRingAngle += delta * (180 / Math.PI) * (2 / 3);
+
+                lastX = x;
+                lastY = y;
+            };
+
+            const handleEnd = () => { isDragging = false; };
+
+            canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+            window.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', handleEnd);
+
+            canvas.addEventListener('touchstart', e => {
+                if (e.touches.length > 1) return;
+                const t = e.touches[0];
+                handleStart(t.clientX, t.clientY);
+            }, { passive: false });
+
+            window.addEventListener('touchmove', e => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const t = e.touches[0];
+                handleMove(t.clientX, t.clientY);
+            }, { passive: false });
+
+            window.addEventListener('touchend', handleEnd);
+
+            // Key Controls
+            window.addEventListener('keydown', e => {
+                const step = 360 / GEAR_TEETH;
+                if (e.key === 'ArrowRight' || e.key === 'd') {
+                    state.targetGearAngle -= step;
+                    state.targetRingAngle -= step * 0.666;
+                }
+                if (e.key === 'ArrowLeft' || e.key === 'a') {
+                    state.targetGearAngle += step;
+                    state.targetRingAngle += step * 0.666;
+                }
+                if (e.key === 's' || e.key === ' ') {
+                    // Simulate Center Click or verify?
+                    // For now just existing logic or ignore
+                }
+            });
         }
 
         // Init
