@@ -1122,43 +1122,32 @@
             const dist = Math.hypot(dx, dy);
 
             if (dist < geom.gearRootR * 0.55) {
-                // Hub Clicked! - Check for double tap
-                const now = Date.now();
-                const isDoubleTap = (now - lastTapTime) < DOUBLE_TAP_DELAY;
-                lastTapTime = now;
+                // Hub Clicked! 
+                // Note: Double Tap / Long Press logic is mainly handled in handleEnd
+                // handleClick is purely for simple state transitions or direct calls
 
                 if (!state.roundStarted) {
-                    // Phase 1: Single tap to start round
-                    // CONFIRM SELECTION -> Start Zoom Out
+                    // Phase 1: Start Round
                     state.roundStarted = true;
-                    state.targetZoom = 1.0;          // Zoom Out
-                    state.targetRingOpacity = 1.0;   // Fade In Outer
-                    state.targetOffsetX = geom.centerOffset; // Shift so Ring is Centered
+                    state.targetZoom = 1.0;
+                    state.targetRingOpacity = 1.0;
+                    state.targetOffsetX = geom.centerOffset;
 
+                    // Lock the choice
+                    const gearPitch = 360 / GEAR_TEETH;
+                    const contactDeg = 0;
+                    const rawIdx = (contactDeg - state.gearAngle) / gearPitch;
+                    let idx = Math.round(rawIdx) % GEAR_TEETH;
+                    if (idx < 0) idx += GEAR_TEETH;
+                    state.selectedInnerIdx = idx;
+
+                    updateScore();
                     document.getElementById('hint-box').style.opacity = '0';
                     document.getElementById('score-panel').classList.remove('hidden');
-                    updateScore();
-
-                    // Recalculate match?
-                    state.selectedInnerIdx = state.activeInnerIdx;
                 } else {
-                    // Round already started - check tap type
-                    if (isDoubleTap) {
-                        // DOUBLE TAP = RESET (W key - go home)
-                        state.roundStarted = false;
-                        state.targetZoom = 1.5;
-                        state.targetRingOpacity = 0;
-                        state.targetOffsetX = 0;         // Shift Back Center
-                        state.score = 0;
-                        state.attempts = 0;
-                        state.selectedInnerIdx = null;
-                        updateScore();
-                        document.getElementById('hint-box').style.opacity = '1';
-                        document.getElementById('score-panel').classList.add('hidden');
-                    } else {
-                        // SINGLE TAP = CHECK ANSWER (S key - confirm)
-                        checkAnswer();
-                    }
+                    // Phase 2: If we reach here via direct call (e.g. keyboard 's'), check answer
+                    // Mouse/Touch interactions filter through handleEnd logic (long press vs tap) first.
+                    checkAnswer();
                 }
                 return;
             }
@@ -1284,8 +1273,25 @@
         }
 
         // Check answer and show result
+        // Check answer and show result
         function checkAnswer() {
             if (!state.roundStarted) return;
+
+            // Validate Alignment & Selection
+            const gearPitch = 360 / GEAR_TEETH;
+            const contactDeg = 0;
+            const rawIdx = (contactDeg - state.gearAngle) / gearPitch;
+            const dist = Math.abs(rawIdx - Math.round(rawIdx));
+
+            // Strict Input Restriction:
+            // 1. Must be aligned (dist < 0.1)
+            // 2. Must matches the selected question
+            if (dist > 0.1) return; // Not aligned
+
+            let idx = Math.round(rawIdx) % GEAR_TEETH;
+            if (idx < 0) idx += GEAR_TEETH;
+
+            if (state.selectedInnerIdx !== null && state.selectedInnerIdx !== idx) return; // Wrong question active
 
             const innerLabel = state.activeInnerLabel;
             const expectedFlag = countryToA[innerLabel];
@@ -1298,7 +1304,7 @@
             updateScore();
 
             const question = countryToQ[innerLabel] || innerLabel;
-            const answer = expectedFlag || selectedFlag;
+            const answer = selectedFlag; // Show the user's selection (aligned flag)
 
             showOverlay(isCorrect, question, answer);
         }
@@ -1346,28 +1352,27 @@
             let isDragging = false;
             let lastX = 0, lastY = 0;
 
+            let touchStartTime = 0;
+
             const handleStart = (x, y) => {
                 // Allow dragging from anywhere on screen
                 isDragging = true;
                 lastX = x;
                 lastY = y;
-
-                // Calculate click position for hub check
-                const dx = x - geom.gearCenter.x;
-                const dy = y - geom.gearCenter.y;
-
-                // Still handle hub clicks for selection
-                if (Math.hypot(dx, dy) < geom.gearRootR * 0.55) {
-                    handleClick(x, y);
-                }
+                touchStartTime = Date.now();
             };
 
             const handleMove = (x, y) => {
                 if (!isDragging) return;
                 const dx = x - geom.gearCenter.x;
                 const dy = y - geom.gearCenter.y;
-                const angle = Math.atan2(dy, dx);
 
+                // If moved significantly, it's a drag, not a tap
+                if (Math.hypot(x - lastX, y - lastY) > 5) {
+                    // It's a drag
+                }
+
+                const angle = Math.atan2(dy, dx);
                 const prevA = Math.atan2(lastY - geom.gearCenter.y, lastX - geom.gearCenter.x);
                 let delta = angle - prevA;
 
@@ -1382,7 +1387,50 @@
                 lastY = y;
             };
 
-            const handleEnd = () => {
+            const handleEnd = (e) => {
+                // Check for Tap / Long Press on Hub
+                // We need the up coordinates. For mouse/touch end, we use lastX/Y if not provided?
+                // Actually touchend doesn't give coords. We rely on logic.
+
+                // Calculate distance from center (using last known position)
+                const dx = lastX - geom.gearCenter.x;
+                const dy = lastY - geom.gearCenter.y;
+                const distFromCenter = Math.hypot(dx, dy);
+                const isHubClick = distFromCenter < geom.gearRootR * 0.55;
+
+                const duration = Date.now() - touchStartTime;
+
+                // If it was a short click/tap on the Hub without much movement
+                // Note: Real drag detection should use total movement delta, simplistic here
+                if (isDragging && isHubClick && duration < 1000) {
+                    // Logic: If we "dragged" but stayed in hub and released quickly -> Tap
+                    // Actually `isDragging` is set true on Start.
+                }
+
+                if (isHubClick) {
+                    if (duration > 400) {
+                        // Long Press (> 400ms) -> RESET (W action)
+                        // Trigger Reset Logic
+                        state.roundStarted = false;
+                        state.targetZoom = 1.5;
+                        state.targetRingOpacity = 0;
+                        state.targetOffsetX = 0;
+                        state.score = 0;
+                        state.attempts = 0;
+                        state.selectedInnerIdx = null;
+                        updateScore();
+                        document.getElementById('hint-box').style.opacity = '1';
+                        document.getElementById('score-panel').classList.add('hidden');
+                    } else {
+                        // Short Press -> SELECT (S action)
+                        if (!state.roundStarted) {
+                            handleClick(lastX, lastY); // Start Round
+                        } else {
+                            checkAnswer(); // Check Answer
+                        }
+                    }
+                }
+
                 isDragging = false;
 
                 // Snap to nearest tooth
@@ -1400,7 +1448,6 @@
             window.addEventListener('mouseup', handleEnd);
 
             canvas.addEventListener('touchstart', e => {
-                // Prevent emulated mouse events (fixes double-tap issue)
                 e.preventDefault();
                 if (e.touches.length > 1) return;
                 const t = e.touches[0];
