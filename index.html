@@ -191,23 +191,12 @@
                 width: 16px !important;
             }
         }
-
-        /* Always allow portrait mode on phones */
-        #rotate-message {
-            display: none;
-        }
     </style>
 </head>
 
 <body class="bg-gray-100 overflow-hidden select-none m-0 p-0 font-['Inter']">
 
-    <!-- Landscape Warning Overlay -->
-    <div id="rotate-message"
-        class="fixed inset-0 z-[99999] bg-[#1565C0] flex flex-col items-center justify-center text-white">
-        <div class="text-6xl mb-6 animate-bounce">📱🔄</div>
-        <div class="text-3xl font-black text-center px-8">PLEASE ROTATE DEVICE</div>
-        <p class="mt-4 text-white/80">This game works best in Landscape Mode</p>
-    </div>
+
 
     <!-- Main Game Container -->
     <div id="game-container" class="relative w-full h-full bg-gradient-to-b from-[#1E88E5] to-[#1565C0]">
@@ -249,47 +238,7 @@
         </div>
     </div>
 
-    <!-- TUTORIAL OVERLAY -->
-    <div id="tutorial-overlay" class="fixed inset-0 z-[100] pointer-events-auto">
-        <!-- Phase 1: Initial rotation tutorial -->
-        <div id="tutorial-phase1" class="absolute inset-0 flex items-center justify-center">
-            <!-- Curved arrow left -->
-            <div id="arrow-left" class="absolute animate-pulse" style="opacity: 0;">
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                    <path d="M60 50 Q40 20 20 50" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" />
-                    <polygon points="15,45 20,55 28,48" fill="white" />
-                </svg>
-            </div>
-            <!-- Curved arrow right -->
-            <div id="arrow-right" class="absolute animate-pulse" style="opacity: 0;">
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                    <path d="M20 50 Q40 20 60 50" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" />
-                    <polygon points="65,45 60,55 52,48" fill="white" />
-                </svg>
-            </div>
-            <!-- Tap instruction -->
-            <div id="tap-hint" class="absolute text-center" style="opacity: 0;">
-                <div class="bg-black/60 backdrop-blur-sm rounded-2xl px-6 py-4 text-white animate-bounce">
-                    <div class="text-3xl mb-2">👆</div>
-                    <div class="text-lg font-bold">TAP TO SELECT</div>
-                    <div class="text-sm opacity-80">Rotate wheel with swipe</div>
-                </div>
-            </div>
-        </div>
-        <!-- Phase 2: Outer wheel tutorial -->
-        <div id="tutorial-phase2" class="absolute inset-0 hidden">
-            <div id="match-hint" class="absolute text-center" style="opacity: 0;">
-                <div class="bg-black/60 backdrop-blur-sm rounded-2xl px-6 py-4 text-white">
-                    <div class="text-2xl mb-2">🎯</div>
-                    <div class="text-lg font-bold">MATCH Q & A</div>
-                    <div class="text-sm opacity-80 mt-2">
-                        <span class="inline-block px-2 py-1 bg-white/20 rounded">1 Tap = Confirm</span>
-                        <span class="inline-block px-2 py-1 bg-white/20 rounded ml-2">2 Taps = Home</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <div class="absolute top-4 left-4 max-w-xs p-4 rounded-2xl shadow-lg question-panel pointer-events-none transition-opacity duration-500"
         id="q-panel">
@@ -323,7 +272,7 @@
 
         // Manual Offsets (in degrees) to fine-tune positions
         // Approx 1 degree = ~4-5 pixels on screen depending on device
-        const MANUAL_OUTER_OFFSET = -4.0;
+        const MANUAL_OUTER_OFFSET = -19.0;
         const MANUAL_INNER_OFFSET = 0;
 
         // Game State
@@ -590,11 +539,18 @@
             // Let's cache Gear Body. Draw Hub dynamically in render loop.
         }
 
+        // Initialize state variables for animation
+        state.offsetX = 0;
+        state.targetOffsetX = 0;
+
         function resize() {
             width = window.innerWidth;
             height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
+
+
+
             minDim = Math.min(width, height);
             centerX = width / 2;
             centerY = height / 2;
@@ -612,15 +568,16 @@
             geom.gearRootR = gearPitchR - toothH / 2;
             geom.gearTipR = gearPitchR + toothH / 2 + (minDim * 0.0075);
 
-            const centerOffset = ringPitchR - gearPitchR;
-            // Contact angle 0 degrees (Right side)
-            const contactRad = 0;
+            // Initial Position update
+            updateGearPositions();
 
-            geom.ringCenter = { x: centerX, y: centerY };
-            geom.gearCenter = {
-                x: centerX + centerOffset * Math.cos(contactRad),
-                y: centerY + centerOffset * Math.sin(contactRad)
-            };
+            // RingCenter + RingPitchR = Contact
+            // RingCenter = Contact - RingPitchR
+            // RingCenter = GearCenter + GearPitchR - RingPitchR
+            // RingCenter = GearCenter - (RingPitchR - GearPitchR)
+            // RingCenter = GearCenter - centerOffset
+
+
 
             prerenderStaticAssets(); // Cache heavy paths
 
@@ -629,6 +586,29 @@
         }
 
         window.addEventListener('resize', resize);
+
+        // New function to update just position (for animation)
+        function updateGearPositions() {
+            // Recalculate center offset using radii from geometry
+            const toothH = minDim * 0.06;
+            const ringPitchR = geom.ringRootR - toothH / 2;
+            const gearPitchR = ringPitchR * (2 / 3);
+            const centerOffset = ringPitchR - gearPitchR;
+            geom.centerOffset = centerOffset; // Store for animation targets
+            const contactRad = 0;
+
+            const cx = (width / 2) + (state.offsetX || 0);
+            const cy = height / 2;
+
+            // Center the INNER GEAR on the screen point (cx, cy)
+            geom.gearCenter = { x: cx, y: cy };
+
+            // The Outer Ring is offset to the LEFT to mesh at the RIGHT of the gear
+            geom.ringCenter = {
+                x: cx - centerOffset * Math.cos(contactRad),
+                y: cy - centerOffset * Math.sin(contactRad)
+            };
+        }
 
         /* ===========================
            ANIMATION LOOP
@@ -648,6 +628,12 @@
                 // Zoom & Opacity Animation
                 state.zoom += (state.targetZoom - state.zoom) * 0.05;
                 state.ringOpacity += (state.targetRingOpacity - state.ringOpacity) * 0.05;
+
+                // Position Animation
+                if (Math.abs(state.targetOffsetX - state.offsetX) > 0.5) {
+                    state.offsetX += (state.targetOffsetX - state.offsetX) * 0.05;
+                    updateGearPositions(); // Update hitboxes as we move
+                }
 
                 // Update particles
                 if (particles.length > 0) {
@@ -681,7 +667,8 @@
 
             ctx.beginPath();
             for (let i = 0; i < numTeeth; i++) {
-                const theta = i * step;
+                // Tooth-Centric: Shift by half step so Tooth is at 0 (not Root)
+                const theta = i * step - halfStep;
                 // Root
                 ctx.arc(cx, cy, rRoot, theta - halfStep / 2 + 0.05, theta + halfStep / 2 - 0.05);
 
@@ -744,9 +731,10 @@
             ctx.clearRect(0, 0, width, height);
 
             ctx.save();
-            ctx.translate(centerX, centerY);
+            ctx.save();
+            ctx.translate(centerX + state.offsetX, centerY);
             ctx.scale(state.zoom, state.zoom);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-centerX - state.offsetX, -centerY);
 
             // 0. Draw Background Particles (Behind everything)
             if (particles.length > 0) {
@@ -758,7 +746,8 @@
                 ctx.globalAlpha = state.ringOpacity;
 
                 ctx.save();
-                ctx.translate(centerX, centerY);
+                // Draw Ring at its calculated center (offset from gear)
+                ctx.translate(geom.ringCenter.x, geom.ringCenter.y);
 
                 // Rotated Draw from Cache
                 // The cache is 0-aligned. We simply rotate the context by the Ring Angle + Offset.
@@ -855,7 +844,7 @@
                 }
                 if (itemAlpha < 0.01) return;
 
-                const theta = i * gearStepRad + (gearStepRad / 2) + (MANUAL_INNER_OFFSET * Math.PI / 180);
+                const theta = i * gearStepRad + (MANUAL_INNER_OFFSET * Math.PI / 180);
                 const x = textR * Math.cos(theta);
                 const y = textR * Math.sin(theta);
 
@@ -914,7 +903,8 @@
             // Position flags on the outer ring band (middle of the ring)
             const radius = (geom.ringOuterR + geom.ringRootR) / 2;
             const ringPitch = (2 * Math.PI) / RING_TEETH;
-            const phaseOffset = (state.ringAngle + RING_STEP / 2 + 4 + RING_STEP / 2 + (RING_STEP / 2) + MANUAL_OUTER_OFFSET) * (Math.PI / 180);
+            // Shift by half step to be in the "dip"
+            const phaseOffset = (state.ringAngle + RING_STEP / 2 + 4 + RING_STEP / 2 + (RING_STEP / 2) + (RING_STEP / 2) + MANUAL_OUTER_OFFSET) * (Math.PI / 180);
 
             // Find the 5 rightmost indices (closest to 0 degrees / right side)
             function getRightmost5Indices() {
@@ -946,9 +936,12 @@
                 const wx = geom.ringCenter.x + radius * Math.cos(theta);
                 const wy = geom.ringCenter.y + radius * Math.sin(theta);
 
-                // Screen Coords
-                const sx = centerX + (wx - centerX) * state.zoom;
-                const sy = centerY + (wy - centerY) * state.zoom;
+                // Screen Coords - Origin is centerX + offsetX
+                const ox = centerX + (state.offsetX || 0);
+                const oy = centerY;
+
+                const sx = ox + (wx - ox) * state.zoom;
+                const sy = oy + (wy - oy) * state.zoom;
 
                 el.style.left = sx + 'px';
                 el.style.top = sy + 'px';
@@ -1018,10 +1011,10 @@
             // at 0 deg: angle + i*pitch = 0  => i*pitch = -angle
             // Invert logic:
             // The item at 0 degrees is the one where (i * step + currentAngle) % 360 ~= 0
-            // i * step = -currentAngle - step/2
-            // i = (-currentAngle - step/2) / step
+            // i * step = -currentAngle
+            // i = -currentAngle / step
 
-            const rawIdx = (contactDeg - state.gearAngle - (gearPitch / 2)) / gearPitch;
+            const rawIdx = (contactDeg - state.gearAngle) / gearPitch;
             let idx = Math.round(rawIdx) % GEAR_TEETH;
             if (idx < 0) idx += GEAR_TEETH;
 
@@ -1045,27 +1038,29 @@
                     const wx = geom.gearCenter.x + geom.gearRootR; // Right edge
                     const wy = geom.gearCenter.y;
 
-                    // To Screen Space
-                    const sx = centerX + (wx - centerX) * state.zoom;
-                    const sy = centerY + (wy - centerY) * state.zoom;
+                    // To Screen Space - Origin is centerX + offsetX
+                    const ox = centerX + (state.offsetX || 0);
+                    const oy = centerY;
+
+                    const sx = ox + (wx - ox) * state.zoom;
+                    const sy = oy + (wy - oy) * state.zoom;
 
                     box.style.display = 'block';
-                    // Box size also depends on zoom? or fixed UI?
-                    // Let's keep it consistent.
-                    box.style.width = (160 * state.zoom) + 'px';
-                    box.style.height = (60 * state.zoom) + 'px';
-                    box.style.left = (sx - (80 * state.zoom)) + 'px'; // Centered on Right Edge? 
-                    // Wait, right edge is x+R. Box center should be there?
-                    // Or box should contain the text? Text is inside.
-                    // Text R = 0.82 * R.
-                    // Box should be around 0.85 * R?
+
+                    // Dynamic Size based on screen & zoom
+                    const boxW = minDim * 0.35 * state.zoom;
+                    const boxH = minDim * 0.09 * state.zoom;
+
+                    box.style.width = boxW + 'px';
+                    box.style.height = boxH + 'px';
 
                     const textR = geom.gearRootR * 0.88;
                     const tx = geom.gearCenter.x + textR;
-                    const screenTx = centerX + (tx - centerX) * state.zoom;
+                    const screenTx = ox + (tx - ox) * state.zoom;
 
-                    box.style.left = (screenTx - (80 * state.zoom)) + 'px';
-                    box.style.top = (sy - (30 * state.zoom)) + 'px';
+                    // Center box on the text position
+                    box.style.left = (screenTx - (boxW / 2)) + 'px';
+                    box.style.top = (sy - (boxH / 2)) + 'px';
 
                 } else {
                     box.style.display = 'none';
@@ -1078,87 +1073,9 @@
         /* ===========================
            TUTORIAL ANIMATIONS
            =========================== */
-        function showInitialTutorial() {
-            if (state.tutorialShown) return;
 
-            const overlay = document.getElementById('tutorial-overlay');
-            const phase1 = document.getElementById('tutorial-phase1');
-            const arrowLeft = document.getElementById('arrow-left');
-            const arrowRight = document.getElementById('arrow-right');
-            const tapHint = document.getElementById('tap-hint');
 
-            overlay.style.pointerEvents = 'none';
-            phase1.classList.remove('hidden');
 
-            // Position arrows around the gear
-            const updateArrowPositions = () => {
-                const gx = geom.gearCenter.x;
-                const gy = geom.gearCenter.y;
-                const r = geom.gearTipR * state.zoom * 0.8;
-
-                arrowLeft.style.left = (gx - r - 60) + 'px';
-                arrowLeft.style.top = (gy - 40) + 'px';
-
-                arrowRight.style.left = (gx + r - 20) + 'px';
-                arrowRight.style.top = (gy - 40) + 'px';
-
-                tapHint.style.left = gx + 'px';
-                tapHint.style.top = (gy + r + 30) + 'px';
-                tapHint.style.transform = 'translateX(-50%)';
-            };
-
-            setTimeout(() => {
-                updateArrowPositions();
-                // Fade in arrows
-                arrowLeft.style.transition = 'opacity 0.5s ease-out';
-                arrowRight.style.transition = 'opacity 0.5s ease-out';
-                arrowLeft.style.opacity = '1';
-                arrowRight.style.opacity = '1';
-
-                // Then show tap hint
-                setTimeout(() => {
-                    tapHint.style.transition = 'opacity 0.5s ease-out';
-                    tapHint.style.opacity = '1';
-                }, 800);
-            }, 500);
-        }
-
-        function showPhase2Tutorial() {
-            const phase1 = document.getElementById('tutorial-phase1');
-            const phase2 = document.getElementById('tutorial-phase2');
-            const matchHint = document.getElementById('match-hint');
-
-            phase1.classList.add('hidden');
-            phase2.classList.remove('hidden');
-
-            // Position at center-bottom
-            setTimeout(() => {
-                matchHint.style.left = '50%';
-                matchHint.style.top = '75%';
-                matchHint.style.transform = 'translate(-50%, -50%)';
-                matchHint.style.transition = 'opacity 0.5s ease-out';
-                matchHint.style.opacity = '1';
-
-                // Auto-hide after 3 seconds
-                setTimeout(() => {
-                    matchHint.style.opacity = '0';
-                }, 3000);
-            }, 500);
-        }
-
-        function hideTutorial() {
-            const arrowLeft = document.getElementById('arrow-left');
-            const arrowRight = document.getElementById('arrow-right');
-            const tapHint = document.getElementById('tap-hint');
-            const matchHint = document.getElementById('match-hint');
-
-            [arrowLeft, arrowRight, tapHint, matchHint].forEach(el => {
-                if (el) {
-                    el.style.transition = 'opacity 0.3s ease-out';
-                    el.style.opacity = '0';
-                }
-            });
-        }
 
         function handleClick(x, y) {
             // Check Hub Click first
@@ -1178,12 +1095,10 @@
                     state.roundStarted = true;
                     state.targetZoom = 1.0;          // Zoom Out
                     state.targetRingOpacity = 1.0;   // Fade In Outer
-                    state.tutorialPhase = 2;         // Switch to phase 2 tutorial
+                    state.targetOffsetX = geom.centerOffset; // Shift so Ring is Centered
 
                     document.getElementById('hint-box').style.opacity = '0';
                     document.getElementById('score-panel').classList.remove('hidden');
-                    hideTutorial();
-                    showPhase2Tutorial();
                     updateScore();
 
                     // Recalculate match?
@@ -1195,14 +1110,13 @@
                         state.roundStarted = false;
                         state.targetZoom = 1.5;
                         state.targetRingOpacity = 0;
+                        state.targetOffsetX = 0;         // Shift Back Center
                         state.score = 0;
                         state.attempts = 0;
                         state.selectedInnerIdx = null;
-                        state.tutorialPhase = 1;
                         updateScore();
                         document.getElementById('hint-box').style.opacity = '1';
                         document.getElementById('score-panel').classList.add('hidden');
-                        hideTutorial();
                     } else {
                         // SINGLE TAP = CHECK ANSWER (S key - confirm)
                         checkAnswer();
@@ -1241,7 +1155,7 @@
             // TargetGearAngle = -i * step
 
             const step = 360 / GEAR_TEETH;
-            let targetG = -idx * step - (step / 2);
+            let targetG = -idx * step;
 
             let current = state.gearAngle;
             let diff = targetG - current;
@@ -1269,7 +1183,8 @@
         // Get the flag at the active position (rightmost on outer ring)
         function getActiveOuterFlag() {
             const ringPitch = (2 * Math.PI) / RING_TEETH;
-            const phaseOffset = (state.ringAngle + RING_STEP / 2 + 4 + RING_STEP / 2 + (RING_STEP / 2) + MANUAL_OUTER_OFFSET) * (Math.PI / 180);
+            // Shift by half step to be in the "dip"
+            const phaseOffset = (state.ringAngle + RING_STEP / 2 + 4 + RING_STEP / 2 + (RING_STEP / 2) + (RING_STEP / 2) + MANUAL_OUTER_OFFSET) * (Math.PI / 180);
 
             // Find which flag is closest to 0 degrees (right side)
             let closestIdx = 0;
@@ -1307,7 +1222,15 @@
             if (question || answer) {
                 details.classList.remove('hidden');
                 qText.innerText = question || '';
-                aText.innerText = answer || '';
+
+                // Show Answer + Flag Image if available
+                const code = typeof flagEmojiToCountryCode === 'function' ? flagEmojiToCountryCode(answer) : null;
+                if (code) {
+                    aText.innerHTML = `<span class="mr-2">${answer}</span><img src="https://flagcdn.com/w80/${code}.png" style="height: 1.2em; vertical-align: middle; border-radius: 4px; display: inline-block;">`;
+                } else {
+                    aText.innerText = answer || '';
+                }
+
                 aText.style.color = isCorrect ? '#2E7D32' : '#B71C1C';
             } else {
                 details.classList.add('hidden');
@@ -1421,7 +1344,18 @@
                 lastY = y;
             };
 
-            const handleEnd = () => { isDragging = false; };
+            const handleEnd = () => {
+                isDragging = false;
+
+                // Snap to nearest tooth
+                const step = 360 / GEAR_TEETH;
+                const current = state.targetGearAngle;
+                const snapped = Math.round(current / step) * step;
+
+                const diff = snapped - current;
+                state.targetGearAngle = snapped;
+                state.targetRingAngle += diff * (2 / 3);
+            };
 
             canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
             window.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
@@ -1469,6 +1403,7 @@
                     state.roundStarted = false;
                     state.targetZoom = 1.5;
                     state.targetRingOpacity = 0;
+                    state.targetOffsetX = 0;         // Shift Back Center
                     state.score = 0;
                     state.attempts = 0;
                     state.selectedInnerIdx = null;
