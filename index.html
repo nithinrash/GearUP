@@ -1024,52 +1024,87 @@
             const activeItem = innerItems[idx];
 
             if (!state.roundStarted) {
-                // Updating UI
+                // Updating UI only in Phase 1 (Scanning)
                 document.getElementById('q-text').innerText = countryToQ[activeItem] || activeItem;
                 state.activeInnerLabel = activeItem;
                 state.activeInnerIdx = idx;
+            }
 
-                // Selection Box Logic
-                // It should be at geom.gearCenter.x + geom.gearRootR, geom.gearCenter.y
-                // Scaled by Zoom!
+            // Selection Box Logic - RUNS ALWAYS
+            // It should be at geom.gearCenter.x + geom.gearRootR, geom.gearCenter.y
+            const box = document.getElementById('selection-box');
 
-                const box = document.getElementById('selection-box');
-                const dist = Math.abs(rawIdx - Math.round(rawIdx));
+            // In Phase 2, we want to highlight the "Selected" item, not the "Active" one?
+            // Actually, the user rotates to align.
+            // When !roundStarted, active = selected candidate.
+            // When roundStarted, we have a fixed selectedInnerIdx.
+            // BUT, the visual logic above checks 'activeItem' based on angle.
+            // If we want the box to check if *current alignment* is valid (at 0 deg), we use 'dist'.
 
-                if (dist < 0.1) {
-                    // Coordinates in World Space
-                    const wx = geom.gearCenter.x + geom.gearRootR; // Right edge
-                    const wy = geom.gearCenter.y;
+            const dist = Math.abs(rawIdx - Math.round(rawIdx));
 
-                    // To Screen Space - Origin is centerX + offsetX
-                    const ox = centerX + (state.offsetX || 0);
-                    const oy = centerY;
-
-                    const sx = ox + (wx - ox) * state.zoom;
-                    const sy = oy + (wy - oy) * state.zoom;
-
-                    box.style.display = 'block';
-
-                    // Dynamic Size based on screen & zoom
-                    const boxW = minDim * 0.35 * state.zoom;
-                    const boxH = minDim * 0.09 * state.zoom;
-
-                    box.style.width = boxW + 'px';
-                    box.style.height = boxH + 'px';
-
-                    const textR = geom.gearRootR * 0.88;
-                    const tx = geom.gearCenter.x + textR;
-                    const screenTx = ox + (tx - ox) * state.zoom;
-
-                    // Center box on the text position
-                    box.style.left = (screenTx - (boxW / 2)) + 'px';
-                    box.style.top = (sy - (boxH / 2)) + 'px';
-
-                } else {
+            if (dist < 0.1) {
+                // If Round Started, ONLY show box if the Aligned Item is the Selected Item
+                if (state.roundStarted && state.selectedInnerIdx !== null && state.selectedInnerIdx !== idx) {
                     box.style.display = 'none';
+                    return;
                 }
+
+                // Coordinates in World Space
+                const wx = geom.gearCenter.x + geom.gearRootR; // Right edge
+                const wy = geom.gearCenter.y;
+
+                // To Screen Space - Origin is centerX + offsetX
+                const ox = centerX + (state.offsetX || 0);
+                const oy = centerY;
+
+                const sx = ox + (wx - ox) * state.zoom;
+                const sy = oy + (wy - oy) * state.zoom;
+
+                box.style.display = 'block';
+
+                // Calculate Key Positions in Screen Space
+                const textR = geom.gearRootR * 0.82; // Inner text radius
+                const innerWx = geom.gearCenter.x + textR;
+                const innerSx = ox + (innerWx - ox) * state.zoom;
+
+                const ringR = (geom.ringOuterR + geom.ringRootR) / 2; // Outer flag radius
+                const outerWx = geom.ringCenter.x + ringR;
+                const outerSx = ox + (outerWx - ox) * state.zoom;
+
+                let boxW, boxLeft;
+                const padding = minDim * 0.04 * state.zoom;
+
+                if (!state.roundStarted) {
+                    // Phase 1: Only Inner Text - Fit to Size
+                    // Estimate Width based on character count (Inter is variable width, but ~0.6em avg)
+                    // Font is approx minDim * 0.018 in size
+                    // Let's rely on a heuristic approx width
+                    const approxCharW = minDim * 0.012 * state.zoom;
+                    let textW = (activeItem.length * approxCharW) + (minDim * 0.04 * state.zoom);
+
+                    // Min width for aesthetics
+                    textW = Math.max(textW, minDim * 0.15 * state.zoom);
+
+                    boxW = textW;
+                    boxLeft = innerSx - (boxW / 2);
+                } else {
+                    // Phase 2: Span Inner Text to Outer Flag
+                    const dist = outerSx - innerSx;
+                    boxW = dist + (padding * 3); // Extra padding
+                    const midX = (innerSx + outerSx) / 2;
+                    boxLeft = midX - (boxW / 2);
+                }
+
+                const boxH = minDim * 0.08 * state.zoom;
+
+                box.style.width = boxW + 'px';
+                box.style.height = boxH + 'px';
+                box.style.left = boxLeft + 'px';
+                box.style.top = (sy - (boxH / 2)) + 'px';
+
             } else {
-                document.getElementById('selection-box').style.display = 'none';
+                box.style.display = 'none';
             }
         }
 
