@@ -325,7 +325,7 @@
                 this.x = Math.random() * w;
                 this.y = randomY ? Math.random() * h : -50;
                 this.size = Math.random() * 20 + 20; // 20-40px
-                this.speed = Math.random() * 2 + 1;
+                this.speed = Math.random() * 0.5 + 0.2; // Very slow falling
                 this.rotation = Math.random() * 360;
                 this.rotSpeed = (Math.random() - 0.5) * 4;
                 this.wobble = Math.random() * Math.PI * 2;
@@ -513,7 +513,7 @@
             // Gear Body
             drawExternalGearPath(cachedGearCtx, 0, 0, geom.gearRootR, geom.gearTipR, GEAR_TEETH);
             const gearGrad = cachedGearCtx.createRadialGradient(0, 0, geom.gearRootR * 0.5, 0, 0, geom.gearTipR);
-            gearGrad.addColorStop(0, '#FFE082');
+            gearGrad.addColorStop(0, '#FFCA28'); // Deeper Amber for center
             gearGrad.addColorStop(1, '#FF8F00');
             cachedGearCtx.fillStyle = gearGrad;
             cachedGearCtx.fill();
@@ -556,7 +556,7 @@
             centerY = height / 2;
 
             // Calculate Gear Geometry
-            geom.ringOuterR = minDim * 0.48;
+            geom.ringOuterR = minDim * 0.42;
             const ringBandW = minDim * 0.07;
             geom.ringRootR = geom.ringOuterR - ringBandW;
             const toothH = minDim * 0.06;
@@ -775,39 +775,42 @@
 
             // Inner Hub (Dynamic because it changes color/state)
             const boreR = geom.gearRootR * 0.55;
-            ctx.beginPath();
-            ctx.arc(0, 0, boreR, 0, Math.PI * 2);
-            const hubGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, boreR);
-            // Highlight hub when ready to click?
-            if (!state.roundStarted && state.zoom > 1.2) {
-                hubGrad.addColorStop(0, '#B0BEC5'); // Lighter
-                hubGrad.addColorStop(1, '#546E7A');
-            } else {
-                hubGrad.addColorStop(0, '#95A5AE');
-                hubGrad.addColorStop(1, '#3A454B');
-            }
-            ctx.fillStyle = hubGrad;
-            ctx.fill();
+            // Inner Hub Background Removed for Continuity
+            // The cached gear body will show through.
 
             // Hub Text "TAP" if zoomed
             const hubIsMobile = minDim < 500;
             if (!state.roundStarted && state.zoom > 1.2) {
-                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.strokeStyle = '#E65100'; // Deep Orange Border
+                ctx.lineWidth = minDim * 0.006;
                 ctx.font = `bold ${minDim * (hubIsMobile ? 0.035 : 0.04)}px Inter`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
+
+                ctx.strokeText("TAP", 0, -minDim * 0.01);
                 ctx.fillText("TAP", 0, -minDim * 0.01);
+
                 ctx.font = `bold ${minDim * (hubIsMobile ? 0.016 : 0.02)}px Inter`;
+                ctx.strokeText("TO SELECT", 0, minDim * 0.025);
                 ctx.fillText("TO SELECT", 0, minDim * 0.025);
+
             } else if (state.roundStarted) {
                 // Show tap instructions when outer wheel is visible
-                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.strokeStyle = '#BF360C';
+                ctx.lineWidth = minDim * 0.004;
+
+                ctx.fillStyle = 'rgba(255,255,255,0.95)';
                 ctx.font = `bold ${minDim * (hubIsMobile ? 0.018 : 0.022)}px Inter`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
+
+                ctx.strokeText("1× CHECK", 0, -minDim * 0.018);
                 ctx.fillText("1× CHECK", 0, -minDim * 0.018);
+
                 ctx.font = `bold ${minDim * (hubIsMobile ? 0.015 : 0.018)}px Inter`;
                 ctx.fillStyle = 'rgba(255,200,200,0.9)';
+                ctx.strokeText("2× HOME", 0, minDim * 0.015);
                 ctx.fillText("2× HOME", 0, minDim * 0.015);
             } else {
                 // Bolts normally
@@ -970,8 +973,8 @@
                 const flagIsMobile = minDim < 500;
                 let sizeScale = 1.0;
                 if (rank >= 0 && rank < 5) {
-                    const maxFlagScale = flagIsMobile ? 1.25 : 1.5;
-                    const flagScaleStep = flagIsMobile ? 0.05 : 0.1;
+                    const maxFlagScale = flagIsMobile ? 1.6 : 1.5;
+                    const flagScaleStep = flagIsMobile ? 0.1 : 0.1;
                     sizeScale = maxFlagScale - (rank * flagScaleStep);
                 }
 
@@ -989,10 +992,10 @@
                 // Also adjust the image/content size for the big ones
                 const img = el.querySelector('img');
                 if (img) {
-                    // Gradient image sizes based on rank - smaller for mobile
-                    const baseSizes = flagIsMobile ? [28, 25, 23, 21, 19, 18] : [52, 46, 42, 38, 35, 32];
+                    // Gradient image sizes based on rank - HUGE for mobile active to be obvious
+                    const baseSizes = flagIsMobile ? [20, 18, 17, 15, 13, 11] : [20, 18, 17, 15, 13, 11];
                     const sizeIdx = rank >= 0 && rank < 5 ? rank : 5;
-                    img.style.width = baseSizes[sizeIdx] + 'px';
+                    img.style.setProperty('width', baseSizes[sizeIdx] + 'px', 'important');
                 }
             });
         }
@@ -1226,7 +1229,7 @@
                 // Show Answer + Flag Image if available
                 const code = typeof flagEmojiToCountryCode === 'function' ? flagEmojiToCountryCode(answer) : null;
                 if (code) {
-                    aText.innerHTML = `<span class="mr-2">${answer}</span><img src="https://flagcdn.com/w80/${code}.png" style="height: 1.2em; vertical-align: middle; border-radius: 4px; display: inline-block;">`;
+                    aText.innerHTML = `<img src="https://flagcdn.com/w80/${code}.png" style="height: 1.5em; vertical-align: middle; border-radius: 4px; display: inline-block;">`;
                 } else {
                     aText.innerText = answer || '';
                 }
