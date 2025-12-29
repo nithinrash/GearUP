@@ -639,7 +639,10 @@
 
                 // Zoom & Opacity Animation
                 state.zoom += (state.targetZoom - state.zoom) * 0.05;
-                state.ringOpacity += (state.targetRingOpacity - state.ringOpacity) * 0.05;
+                state.zoom += (state.targetZoom - state.zoom) * 0.05;
+                // state.ringOpacity += (state.targetRingOpacity - state.ringOpacity) * 0.15; 
+                // User requested NO transparency animation -> Instant toggle
+                state.ringOpacity = state.targetRingOpacity;
 
                 // Position Animation
                 if (Math.abs(state.targetOffsetX - state.offsetX) > 0.5) {
@@ -800,12 +803,12 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                ctx.strokeText("TAP", 0, -minDim * 0.01);
-                ctx.fillText("TAP", 0, -minDim * 0.01);
+                ctx.strokeText("", 0, -minDim * 0.01);
+                ctx.fillText("", 0, -minDim * 0.01);
 
                 ctx.font = `bold ${minDim * (hubIsMobile ? 0.016 : 0.02)}px Inter`;
-                ctx.strokeText("TO SELECT", 0, minDim * 0.025);
-                ctx.fillText("TO SELECT", 0, minDim * 0.025);
+                ctx.strokeText("", 0, minDim * 0.025);
+                ctx.fillText("", 0, minDim * 0.025);
 
             } else if (state.roundStarted) {
                 // Show tap instructions when outer wheel is visible
@@ -817,13 +820,13 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                ctx.strokeText("1× CHECK", 0, -minDim * 0.018);
-                ctx.fillText("1× CHECK", 0, -minDim * 0.018);
+                ctx.strokeText("", 0, -minDim * 0.018);
+                ctx.fillText("", 0, -minDim * 0.018);
 
                 ctx.font = `bold ${minDim * (hubIsMobile ? 0.015 : 0.018)}px Inter`;
                 ctx.fillStyle = 'rgba(255,200,200,0.9)';
-                ctx.strokeText("2× HOME", 0, minDim * 0.015);
-                ctx.fillText("2× HOME", 0, minDim * 0.015);
+                ctx.strokeText("", 0, minDim * 0.015);
+                ctx.fillText("", 0, minDim * 0.015);
             } else {
                 // Bolts normally
                 ctx.fillStyle = '#263238';
@@ -1365,24 +1368,30 @@
             let lastX = 0, lastY = 0;
 
             let touchStartTime = 0;
+            let startX = 0, startY = 0;
+            let hasMoved = false;
 
             const handleStart = (x, y) => {
                 // Allow dragging from anywhere on screen
                 isDragging = true;
                 lastX = x;
                 lastY = y;
+                startX = x;
+                startY = y;
+                hasMoved = false;
                 touchStartTime = Date.now();
             };
 
             const handleMove = (x, y) => {
                 if (!isDragging) return;
+
+                // Check total movement from start
+                if (Math.hypot(x - startX, y - startY) > 10) {
+                    hasMoved = true;
+                }
+
                 const dx = x - geom.gearCenter.x;
                 const dy = y - geom.gearCenter.y;
-
-                // If moved significantly, it's a drag, not a tap
-                if (Math.hypot(x - lastX, y - lastY) > 5) {
-                    // It's a drag
-                }
 
                 const angle = Math.atan2(dy, dx);
                 const prevA = Math.atan2(lastY - geom.gearCenter.y, lastX - geom.gearCenter.x);
@@ -1400,48 +1409,32 @@
             };
 
             const handleEnd = (e) => {
-                // Check for Tap / Long Press on Hub
-                // We need the up coordinates. For mouse/touch end, we use lastX/Y if not provided?
-                // Actually touchend doesn't give coords. We rely on logic.
+                // Fix: If we didn't start the interaction (e.g. tapped box blocking canvas), ignore end.
+                if (!isDragging) return;
 
-                // Calculate distance from center (using last known position)
-                const dx = lastX - geom.gearCenter.x;
-                const dy = lastY - geom.gearCenter.y;
-                const distFromCenter = Math.hypot(dx, dy);
-                const isHubClick = distFromCenter < geom.gearRootR * 0.55;
-
+                // Check Global Long Press (Reset)
+                // Condition: Not moved significantly (is a press/hold) AND duration > 400ms
                 const duration = Date.now() - touchStartTime;
 
-                // If it was a short click/tap on the Hub without much movement
-                // Note: Real drag detection should use total movement delta, simplistic here
-                if (isDragging && isHubClick && duration < 1000) {
-                    // Logic: If we "dragged" but stayed in hub and released quickly -> Tap
-                    // Actually `isDragging` is set true on Start.
+                if (!hasMoved && duration > 400) {
+                    // GLOBAL LONG PRESS -> RESET (W action)
+                    state.roundStarted = false;
+                    state.targetZoom = 1.5;
+                    state.targetRingOpacity = 0;
+                    state.targetOffsetX = 0; // Center
+                    state.score = 0;
+                    state.attempts = 0;
+                    state.selectedInnerIdx = null;
+                    updateScore();
+                    document.getElementById('hint-box').style.opacity = '1';
+                    document.getElementById('score-panel').classList.add('hidden');
+
+                    isDragging = false;
+                    return;
                 }
 
-                if (isHubClick) {
-                    if (duration > 400) {
-                        // Long Press (> 400ms) -> RESET (W action)
-                        // Trigger Reset Logic
-                        state.roundStarted = false;
-                        state.targetZoom = 1.5;
-                        state.targetRingOpacity = 0;
-                        state.targetOffsetX = 0;
-                        state.score = 0;
-                        state.attempts = 0;
-                        state.selectedInnerIdx = null;
-                        updateScore();
-                        document.getElementById('hint-box').style.opacity = '1';
-                        document.getElementById('score-panel').classList.add('hidden');
-                    } else {
-                        // Short Press -> SELECT (S action)
-                        if (!state.roundStarted) {
-                            handleClick(lastX, lastY); // Start Round
-                        } else {
-                            checkAnswer(); // Check Answer
-                        }
-                    }
-                }
+                // Note: Short Tap on Hub or anywhere else on Canvas is now IGNORED for selection.
+                // Selection ('S') is handled by clicking the Transparent Box directly.
 
                 isDragging = false;
 
@@ -1474,6 +1467,36 @@
             }, { passive: false });
 
             window.addEventListener('touchend', handleEnd);
+
+            // Selection Box Interaction (Set ONCE)
+            const box = document.getElementById('selection-box');
+            box.style.pointerEvents = 'auto';
+            box.onclick = (e) => {
+                e.preventDefault(); // Stop double input if touch simulation
+                e.stopPropagation();
+
+                if (!state.roundStarted) {
+                    // Phase 1: Start Round
+                    state.roundStarted = true;
+                    state.targetZoom = 1.0;
+                    state.targetRingOpacity = 1.0;
+                    state.targetOffsetX = geom.centerOffset;
+
+                    // Lock choice
+                    const gearPitch = 360 / GEAR_TEETH;
+                    const contactDeg = 0;
+                    const rawIdx = (contactDeg - state.gearAngle) / gearPitch;
+                    let idx = Math.round(rawIdx) % GEAR_TEETH;
+                    if (idx < 0) idx += GEAR_TEETH;
+                    state.selectedInnerIdx = idx;
+
+                    updateScore();
+                    document.getElementById('hint-box').style.opacity = '0';
+                    document.getElementById('score-panel').classList.remove('hidden');
+                } else {
+                    checkAnswer();
+                }
+            };
 
             // Key Controls
             window.addEventListener('keydown', e => {
